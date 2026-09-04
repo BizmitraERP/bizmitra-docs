@@ -189,8 +189,8 @@ export default withMermaid(defineConfig({
 
     footer: {
       message:
-        'Documentation licensed under MIT. Use of the Bizmitra API, Connector App, and hosted services is governed separately by Bizmitra’s commercial terms.',
-      copyright: '© Bizmitra',
+        'Documentation content is all rights reserved; code samples are MIT licensed. Use of the Bizmitra API, Connector App, and hosted services is governed separately by Bizmitra’s commercial terms.',
+      copyright: '© Drushtant Infoweb Pvt. Ltd.',
     },
   },
 

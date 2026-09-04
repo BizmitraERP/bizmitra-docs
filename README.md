@@ -106,4 +106,9 @@ Build output is static, in `.vitepress/dist`. Deploy to any static host and poin
 
 ## Licence
 
-Documentation is MIT licensed. Use of the Bizmitra API, Connector App, and hosted services is governed separately by Bizmitra's commercial terms.
+Two arrangements, set out in full in [`LICENSE`](LICENSE):
+
+- **Documentation content** — copyright © Drushtant Infoweb Pvt. Ltd. All rights reserved.
+- **Code samples** — MIT licensed.
+
+Use of the Bizmitra API, Connector App, and hosted services is governed separately by Bizmitra's commercial terms.

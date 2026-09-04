@@ -1,21 +1,65 @@
-MIT License
+Bizmitra Documentation — Licensing
+==================================
 
-Copyright (c) 2026 Mahendrasinh Rana
+This repository contains two kinds of material, licensed differently.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Documentation content
+------------------------
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+All prose, headings, page structure, tables, diagrams, illustrations, and
+other documentation content in this repository — including everything under
+`docs/` and `public/` that is not a code sample.
+
+    Copyright © Drushtant Infoweb Pvt. Ltd.
+    All rights reserved.
+
+No part of the documentation content may be reproduced, republished,
+redistributed, translated, or adapted, in whole or in part, in any form or by
+any means, without the prior written permission of Drushtant Infoweb Pvt. Ltd.
+
+You may read the documentation, and quote short extracts with attribution for
+the purpose of review, commentary, or supporting your own use of Bizmitra.
+
+
+2. Code samples
+---------------
+
+Source code in this repository — including code blocks embedded in the
+documentation, example requests and payloads, and the site's own
+configuration and build files — is licensed under the MIT License.
+
+    MIT License
+
+    Copyright (c) 2026 Drushtant Infoweb Pvt. Ltd.
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to permit
+    persons to whom the Software is furnished to do so, subject to the
+    following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+    NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+    USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+3. Trademarks and services
+--------------------------
+
+"Bizmitra" and the Bizmitra logo are trademarks of Drushtant Infoweb
+Pvt. Ltd. Neither licence above grants any trademark rights.
+
+Use of the Bizmitra API, the Connector App, and Bizmitra's hosted services is
+governed separately by Bizmitra's commercial terms, not by this file.
+
+TallyPrime and Tally are trademarks of their respective owners.

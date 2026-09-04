@@ -2,9 +2,8 @@
 layout: home
 
 hero:
-  name: Bizmitra
-  text: Business-data interoperability
-  tagline: Connect accounting, commerce, and business software without rebuilding statutory knowledge from scratch.
+  name: Bizmitra Documentation
+  tagline: Everything you need to build, integrate, configure, and use Bizmitra — from developer APIs and the Tally Connector to ERP and ready-made integrations.
   actions:
     - theme: brand
       text: Developer Platform
@@ -15,19 +14,19 @@ hero:
 
 features:
   - title: Developer Platform
-    details: Build on Bizmitra as an interoperability layer. Provision applications, customers, and companies, read and write accounting data, and receive webhooks.
+    details: Build applications and integrations using Bizmitra APIs and infrastructure.
     link: /developer/
     linkText: Start building
   - title: Tally Connector
-    details: A Windows application that carries authorized work between Bizmitra and a locally accessible TallyPrime company. No public exposure of Tally required.
+    details: Install, configure, manage, and troubleshoot connectivity with TallyPrime.
     link: /tally-connector/
     linkText: Learn more
   - title: Integrations
-    details: Ready-made connections between Bizmitra and the software you already use, set up without writing code.
+    details: Configure ready-made integrations between Bizmitra and third-party applications.
     link: /integrations/
     linkText: Browse integrations
   - title: Bizmitra ERP
-    details: Sales, inventory, and user management in the Bizmitra ERP product.
+    details: Learn how to configure and use Bizmitra ERP.
     link: /erp/
     linkText: Open ERP docs
 ---
