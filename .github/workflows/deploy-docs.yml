@@ -22,6 +22,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Full history so VitePress can resolve each page's last-updated
+          # date from git. A shallow clone would stamp every page with the
+          # tip commit's date, in the page footer and in sitemap.xml.
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
