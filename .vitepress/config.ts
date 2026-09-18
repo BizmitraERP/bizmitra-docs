@@ -153,7 +153,16 @@ export default withMermaid(defineConfig({
       '/tally-connector/': [
         {
           text: 'Tally Connector',
-          items: [{ text: 'Overview', link: '/tally-connector/' }],
+          collapsed: false,
+          items: [
+            { text: 'Overview', link: '/tally-connector/' },
+            { text: 'How it all fits together', link: '/tally-connector/how-it-works' },
+            { text: 'Install and pair', link: '/tally-connector/install-and-pair' },
+            { text: 'Adding and changing companies', link: '/tally-connector/companies' },
+            { text: 'Sync settings', link: '/tally-connector/sync-settings' },
+            { text: 'Troubleshooting', link: '/tally-connector/troubleshooting' },
+            { text: 'FAQ', link: '/tally-connector/faq' },
+          ],
         },
       ],
 

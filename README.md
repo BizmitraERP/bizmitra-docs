@@ -41,7 +41,7 @@ bizmitra-docs/
 | Section | Audience | Status |
 |---|---|---|
 | **Developer** | Engineers and SaaS companies building on Bizmitra | Published |
-| **Tally Connector** | People installing and running the Connector | Landing page only |
+| **Tally Connector** | People installing and running the Connector | Published |
 | **Integrations** | Businesses using ready-made connections | Landing page only |
 | **ERP** | Bizmitra ERP users | Landing page only |
 
@@ -69,6 +69,23 @@ developer/
 ├── production/          security, go-live checklist
 └── examples/            pull vouchers, push invoice, postman
 ```
+
+## Tally Connector section
+
+Written for the business user who installs and runs the Connector — no API, no code samples.
+
+```
+tally-connector/
+├── index.md             overview and section index
+├── how-it-works.md      application / customer / company / machine
+├── install-and-pair.md  first-time setup
+├── companies.md         add, swap, pause, unsync
+├── sync-settings.md     Business Hours, Pause, window, interval
+├── troubleshooting.md   Tally freezing, nothing syncing, failed jobs
+└── faq.md               the questions customers actually ask
+```
+
+> **The claim to keep straight.** Pairing registers a *machine*; linking companies is separate and repeatable. Changing which companies sync never requires a new installer or a new pairing code, and a company created for an existing customer reaches their paired machines automatically. Several pages depend on this being stated consistently.
 
 Deferred, with sidebar entries commented out in [`.vitepress/config.ts`](.vitepress/config.ts):
 

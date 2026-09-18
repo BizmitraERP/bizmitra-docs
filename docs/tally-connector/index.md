@@ -2,16 +2,22 @@
 
 The Bizmitra Connector App is a small Windows application that lets an authorized service exchange data with TallyPrime — without exposing Tally to the internet.
 
-::: info Documentation in progress
-This section is being written for the people who install and run the Connector. Installation, pairing, and troubleshooting guides are coming shortly.
+This section is for the people who **install and run** the Connector: business owners, accountants, and the support staff who help them. It assumes no interest in the API.
 
-If you are a developer integrating with the Bizmitra platform, the technical detail you need is in the [Developer Platform](/developer/) section today:
-
-- [The Connector App](/developer/tally/connector-app) — what it is and what it requires
-- [Pairing a company](/developer/tally/pairing) — connecting a company to Tally
-- [Company health](/developer/tally/company-health) — checking readiness
-- [Managing connectors](/developer/platform-concepts/connectors) — the fleet API
+::: tip Integrating with Bizmitra as a developer?
+The API-level detail is in the [Developer Platform](/developer/) section — [The Connector App](/developer/tally/connector-app), [Pairing](/developer/tally/pairing), [Company health](/developer/tally/company-health) and [Managing connectors](/developer/platform-concepts/connectors).
 :::
+
+## Start here
+
+| Page | What it answers |
+|---|---|
+| [How it all fits together](/tally-connector/how-it-works) | The app, the pairing code, and the two kinds of "company" |
+| [Install and pair](/tally-connector/install-and-pair) | Getting it running the first time |
+| [Adding and changing companies](/tally-connector/companies) | Add a company, swap one for another, stop syncing one |
+| [Sync settings](/tally-connector/sync-settings) | Business Hours, Pause, and how hard the Connector works Tally |
+| [Troubleshooting](/tally-connector/troubleshooting) | Tally freezing, nothing syncing, wrong data |
+| [FAQ](/tally-connector/faq) | The questions that come up most |
 
 ## What it does
 
@@ -44,6 +50,8 @@ On the computer that runs TallyPrime, or another on the same network that can re
 
 If Tally runs on a server, install the Connector there rather than on a workstation someone switches off at the end of the day.
 
+**One install per machine, not per company.** A single Connector syncs as many Tally companies as you link to it. See [How it all fits together](/tally-connector/how-it-works).
+
 ## While it is running
 
 The Connector needs the computer switched on and TallyPrime open for syncing to happen. If either stops, syncing pauses and resumes automatically once things are back.
@@ -57,13 +65,7 @@ This covers most of what goes wrong:
 | Connected, but the wrong data | Is the right company open in Tally? |
 | Stopped after an office move | The computer may have a new network connection |
 
-## Coming to this section
-
-- Installation, step by step
-- Pairing with a code
-- Troubleshooting
-- Updating the Connector
-- Uninstalling
+More detail in [Troubleshooting](/tally-connector/troubleshooting).
 
 ## Getting help
 
