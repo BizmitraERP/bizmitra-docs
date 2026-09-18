@@ -26,9 +26,9 @@ Yes, and it is the normal arrangement. Each company syncs independently and can 
 
 They all share one TallyPrime, though, so more linked companies means more work queued against the same instance. If Tally starts feeling slow, see [Sync settings](/tally-connector/sync-settings).
 
-### What is "Company 60"?
+### What is "Company Number"?
 
-Tally's own number for a company in its company list. It is meaningful only inside your Tally installation — it is not a Bizmitra identifier and two unrelated businesses can both have a company 60.
+Tally's own number for a company in its company list. It is meaningful only inside your Tally installation — it is not a Bizmitra identifier and two unrelated businesses can both have a company Number.
 
 The Connector shows it purely so you can tell similarly-named companies apart.
 
