@@ -52,15 +52,21 @@ GET /api/v1/transactions/{transaction_id}
 GET /api/v1/transactions?company_id={company_id}
 ```
 
-A completed write:
+A completed write (the transaction record is nested under `transaction`):
 
 ```json
 {
   "success": true,
-  "status": "completed",
-  "transaction_id": "11111111-1111-1111-1111-111111111111",
-  "tally_voucher_guid": "22222222-2222-2222-2222-222222222222-00000001",
-  "tally_master_id": "335"
+  "transaction": {
+    "job_id": "11111111-1111-1111-1111-111111111111",
+    "transaction_id": "invoice-2026-0042",
+    "status": "completed",
+    "tally_voucher_guid": "22222222-2222-2222-2222-222222222222-00000001",
+    "tally_master_id": "335",
+    "error_code": null,
+    "error_label": null,
+    "error_message": null
+  }
 }
 ```
 
@@ -114,8 +120,82 @@ Acknowledgement is itself idempotent, so acknowledging twice is harmless. Acknow
 
 When a transaction fails, the cause is usually in the payload or the target company's masters rather than in Bizmitra.
 
-1. Read the reported error and the Tally response.
+```json
+{
+  "success": true,
+  "transaction": {
+    "job_id": "11111111-1111-1111-1111-111111111111",
+    "transaction_id": "invoice-2026-0042",
+    "bizmitra_company_id": 123,
+    "job_type": "invoice_sync",
+    "event_type": "invoice_create",
+    "status": "failed",
+    "retry_count": 1,
+    "max_retries": 5,
+    "tally_voucher_guid": null,
+    "error_code": "TALLY_IMPORT_FAILED",
+    "error_label": "Tally import failed",
+    "error_message": "Ledger 'Online Sales' does not exist!",
+    "payload": {
+      "voucher_number": "INV-0042",
+      "voucher_type": "Sales"
+    },
+    "created_at": "2026-09-20T10:20:00Z",
+    "updated_at": "2026-09-20T10:20:08Z",
+    "completed_at": null
+  }
+}
+```
+
+`success: true` means the status request succeeded; `transaction.status: "failed"` means the Tally write failed. Use `error_code` for program logic, `error_label` in compact UI, and `error_message` for the useful rejection reason. When Tally returns XML, Bizmitra extracts the meaningful rejection text (for example `LINEERROR`) but does not expose the raw XML envelope, stack traces, credentials, or internal service details.
+
+The show endpoint accepts either the public `job_id` or your own `transaction_id` in `{job}`:
+
+```http
+GET /api/v1/transactions/{job}
+```
+
+1. Read `error_code` and the sanitized `error_message`.
 2. Fix the payload, or create the missing master.
 3. Resubmit under your idempotency policy.
 
 Do not build a blind automatic retry for validation failures. A payload Tally rejected once will be rejected identically the second time, and an unbounded retry loop against a live company generates noise for the customer and for you.
+
+### Dashboard visibility
+
+The transaction API is the source of truth for an individual pushed voucher and its failure reason. The connector's Sync History is an operational event feed and is useful for connector, Tally, and report activity, but it is not guaranteed to contain every failed transaction. Poll or reconcile through `GET /api/v1/transactions` for application correctness.
+
+Report freshness is available separately through the company-scoped sync-statistics endpoint:
+
+```http
+GET /api/v1/pulled-vouchers/statistics?company_id=42&start_date=2026-09-01&end_date=2026-09-30
+```
+
+Its `reports` collection identifies whether each report is enabled, its current status, row count, and latest stored snapshot:
+
+```json
+{
+  "reports": [
+    {
+      "key": "stock",
+      "label": "Stock summary",
+      "enabled": true,
+      "capability": "report.stock",
+      "status": "available",
+      "rows": 54,
+      "last_updated_at": "2026-09-20T08:25:00Z"
+    },
+    {
+      "key": "gst",
+      "label": "GST",
+      "enabled": false,
+      "capability": "report.gst",
+      "status": "disabled",
+      "rows": 0,
+      "last_updated_at": null
+    }
+  ]
+}
+```
+
+This lets an integration distinguish a fresh report from a disabled or unavailable report without relying on the connector UI. The endpoint is always scoped by `company_id`; it does not aggregate unrelated companies.

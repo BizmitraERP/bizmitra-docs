@@ -48,12 +48,26 @@ Sending a Tally company GUID where `company_id` is expected also lands here.
 ```json
 {
   "success": true,
-  "status": "failed",
-  "transaction_id": "11111111-1111-1111-1111-111111111111"
+  "transaction": {
+    "job_id": "11111111-1111-1111-1111-111111111111",
+    "transaction_id": "invoice-2026-0042",
+    "status": "failed",
+    "retry_count": 1,
+    "max_retries": 5,
+    "error_code": "TALLY_IMPORT_FAILED",
+    "error_label": "Tally import failed",
+    "error_message": "Ledger 'Online Sales' does not exist!",
+    "payload": {
+      "voucher_number": "INV-0042",
+      "voucher_type": "Sales"
+    }
+  }
 }
 ```
 
-Note `success: true` alongside `status: "failed"` — the *query* succeeded; the *work* failed. Branch on `status`, not on `success`.
+`success: true` means the status query succeeded; `transaction.status: "failed"` means the work failed. Branch on `transaction.status`, not on `success`.
+
+`error_code` is the stable machine-readable value, `error_label` is suitable for display, and `error_message` is a sanitized human-readable reason. For a Tally rejection, Bizmitra extracts the useful message from Tally's response; raw XML, stack traces, secrets, and internal service details are not part of the public contract.
 
 Common causes, in rough order of frequency:
 
@@ -97,6 +111,6 @@ Never build an unbounded automatic retry against a validation failure. Tally rej
 - `transaction_id` for every write, before anything else.
 - `key_id` — never the secret.
 - `company_id`, and the request path.
-- The full error response for failed transactions.
+- The public transaction response (`error_code`, `error_label`, and `error_message`) for failed transactions.
 
-When a customer disputes something six months later, the raw response is what settles it.
+When a customer disputes something six months later, these identifiers and public failure fields provide a safe audit trail without storing internal diagnostics in application logs.
