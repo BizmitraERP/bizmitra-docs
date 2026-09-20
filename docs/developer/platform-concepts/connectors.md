@@ -32,6 +32,8 @@ GET    /api/v1/connectors                        # list the fleet
 GET    /api/v1/connectors/{machine}              # one connector
 GET    /api/v1/connectors/{machine}/companies    # what it serves
 GET    /api/v1/connectors/{machine}/jobs         # sync history
+GET    /api/v1/connectors/{machine}/business-hours
+PATCH  /api/v1/connectors/{machine}/business-hours
 PATCH  /api/v1/connectors/{machine}              # rename
 POST   /api/v1/connectors/{machine}/disable      # stop it taking work
 POST   /api/v1/connectors/{machine}/enable       # resume
@@ -39,6 +41,58 @@ DELETE /api/v1/connectors/{machine}              # remove
 ```
 
 Build a support view over these early. When a customer says "it stopped working", the answer is almost always visible in the connector list and its job history — the machine went offline, Tally was closed, or the connector was disabled during an office move.
+
+## Remote business hours
+
+Use business-hours mode when accounts staff need Tally to remain responsive during the working day. Incremental voucher sync and imports continue, but full sync and heavy reports are deferred until outside the configured window.
+
+```http
+PATCH /api/v1/connectors/{machine}/business-hours
+Authorization: Bearer {key_id}:{secret}
+Content-Type: application/json
+```
+
+```json
+{
+  "sync_mode": "business_hours",
+  "business_hours_start": "10:00",
+  "business_hours_end": "17:00",
+  "business_days": [0, 1, 2, 3, 4, 5],
+  "business_timezone": "Asia/Kolkata",
+  "off_hours_full_sync_enabled": true
+}
+```
+
+The update is partial: send only fields that should change. Times use 24-hour `HH:MM`; weekdays are Monday `0` through Sunday `6`; and the timezone must be an IANA name. `sync_mode` accepts `normal` or `business_hours`. Set one field to `null` to remove that remote override and return it to the Connector's local configuration.
+
+Read the current remote overrides with:
+
+```http
+GET /api/v1/connectors/{machine}/business-hours
+```
+
+```json
+{
+  "success": true,
+  "machine_uuid": "muid-1",
+  "settings": {
+    "sync_mode": "business_hours",
+    "business_hours_start": "10:00",
+    "business_hours_end": "17:00",
+    "business_days": [0, 1, 2, 3, 4, 5],
+    "business_timezone": "Asia/Kolkata",
+    "off_hours_full_sync_enabled": true
+  },
+  "effective_after": "next_connector_settings_poll",
+  "maximum_propagation_seconds": 600
+}
+```
+
+Changes normally reach an online Connector within 10 minutes and do not require a restart. A request is scoped to the authenticated developer; a machine belonging to another account returns `404`.
+
+::: warning
+Business-hours mode is not a pause control. To stop a machine from processing work, use the disable endpoint. Setting `off_hours_full_sync_enabled` to `false` means deferred heavy work remains manual-only outside business hours.
+:::
 
 ## Lifecycle
 
