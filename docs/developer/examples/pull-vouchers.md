@@ -192,4 +192,4 @@ async function sync(companyId) {
 
 ## Moving off polling
 
-Once this works, subscribe to [webhooks](/developer/webhooks/) so you are told when vouchers arrive, and keep a version of this loop as a daily reconciliation sweep rather than your primary path.
+Keep this poll → fetch → acknowledge loop as the primary way to receive vouchers. Webhooks currently cover Connector, Tally, and company-presence events only; they do not notify you when a voucher arrives.

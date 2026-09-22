@@ -20,20 +20,20 @@ Verify, enqueue, return `200`. Everything else happens in a worker.
 
 Assume every event may arrive more than once. This is normal behaviour in any at-least-once delivery system, not a fault.
 
-Deduplicate on a stable identifier from the payload:
+Deduplicate on the webhook's stable `event_id` (or the `X-Bizmitra-Delivery` header):
 
 ```js
 async function process(event) {
-  const seen = await store.exists(event.id)
+  const seen = await store.exists(event.event_id)
   if (seen) return                 // already handled
-  await store.record(event.id)
+  await store.record(event.event_id)
   await handle(event)
 }
 ```
 
 Record the identifier **in the same transaction** as the work, or you will eventually record an event you did not finish handling.
 
-For transaction events, `transaction_id` is a natural key. For pulled vouchers, so is the voucher's `transaction_id`.
+Transaction completion/failure and pulled-voucher arrival are not webhook events today; obtain those through their polling APIs.
 
 ## Ordering
 

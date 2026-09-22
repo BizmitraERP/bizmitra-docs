@@ -91,7 +91,7 @@ Store `transaction_id` and `tally_voucher_guid` on your own record. Without the 
 
 Poll `GET /api/v1/transactions/{id}` with backoff — a couple of seconds initially, widening from there. Do not poll in a tight loop; the Connector may be busy, offline, or waiting on a Tally dialog.
 
-Better: use [webhooks](/developer/webhooks/) and stop polling. Poll only as a reconciliation sweep for transactions whose webhook never arrived.
+Transaction outcomes are currently poll-based. Poll at a sensible interval with backoff until the job reaches a terminal state. Webhooks currently cover only Connector, Tally, and company-presence state changes; they do not report transaction completion or failure.
 
 ## Idempotency
 

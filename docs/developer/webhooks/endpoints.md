@@ -77,7 +77,7 @@ Deleting an endpoint stops delivery. Events that occur while no endpoint exists 
 
 One per application is the usual answer, with your own routing behind it.
 
-Separate endpoints make sense when different systems genuinely own different events — for example, transaction results going to your sync service while connector-health events go to your support tooling. That is a real separation of concerns, not just tidiness, because the two have different uptime requirements.
+Separate endpoints can make sense when different systems own different presence events—for example, Connector availability going to operations while company link/unlink events go to onboarding support. Transaction results and voucher arrivals are not webhook events today.
 
 ## Local development
 

@@ -1,6 +1,12 @@
 # Webhooks
 
-Webhooks let Bizmitra tell your application when something happened, instead of you asking repeatedly whether it has.
+Webhooks notify your application about Connector, Tally, and company-presence state changes.
+
+::: warning Current webhook scope
+Webhooks currently cover only these six events: `connector.online`, `connector.offline`, `tally.started`, `tally.stopped`, `company.linked`, and `company.unlinked`.
+
+Transaction completion or failure and pulled-voucher arrival are **not** webhook events today. Continue to poll the transaction and pulled-voucher APIs for those outcomes.
+:::
 
 ## Why they matter here
 
@@ -8,7 +14,7 @@ Because Tally work is asynchronous and runs on a machine that is not always avai
 
 Consider a partner with 400 companies. Polling each one every 30 seconds is over a million requests a day, nearly all of which learn that nothing changed and that most offices are shut.
 
-With webhooks, you are told when a transaction completes, when a voucher arrives, or when a Connector goes offline. Polling drops to a reconciliation sweep.
+With webhooks, you are told when a Connector comes online or goes offline, when Tally starts or stops, and when a company is linked or unlinked. Transaction results and pulled vouchers remain poll-based.
 
 ```mermaid
 flowchart LR
@@ -47,10 +53,10 @@ Everything else is detail. These three are not optional.
 
 **2. Respond fast, process later.** Acknowledge with `2xx` immediately and queue the work. Doing real processing inside the request risks a timeout, which triggers a redelivery, which you then process twice.
 
-**3. Be idempotent.** Assume every event may arrive more than once. Deduplicate on the identifiers in the payload.
+**3. Be idempotent.** Assume every event may arrive more than once. Deduplicate on `event_id` (or the `X-Bizmitra-Delivery` header).
 
 ## What webhooks do not replace
 
 Keep a reconciliation path. Deliveries can fail, your receiver can be down for an hour, an event can be lost at either end.
 
-A daily sweep that lists transactions and pulled vouchers, and reconciles them against your own records, catches whatever the event stream missed. It is a small amount of code and it is the difference between "we noticed" and "the customer noticed".
+Webhooks do not report transaction outcomes or voucher arrivals. Poll the transaction API until each push reaches a terminal state, and keep polling and acknowledging the pulled-voucher API for Tally-originated vouchers.

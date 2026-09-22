@@ -95,7 +95,7 @@ Pulled-voucher responses use `invoices` (list) and `invoice` (detail) regardless
 Be a reasonable client:
 
 - Back off exponentially on retry, with jitter.
-- Do not poll transactions in a tight loop — use [webhooks](/developer/webhooks/).
+- Poll transactions at a sensible interval with backoff until they reach a terminal state. Transaction completion/failure webhooks are not currently available.
 - Batch date-ranged reads rather than requesting voucher-by-voucher.
 - Remember the far end is one desktop machine, not a datacentre. There is a real limit to how fast a single Connector can work through a queue.
 
