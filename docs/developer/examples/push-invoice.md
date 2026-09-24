@@ -90,6 +90,16 @@ Content-Type: application/json
 
 **Every name must exist.** `Example Customer`, `Example Item`, `Nos`, `Main Location`, `Sales`, `CGST`, `SGST` must all exist in the target company, matching exactly. This is the most common cause of a first write failing. See [Masters](/developer/tally/masters).
 
+### The same body covers purchases, credit notes and debit notes
+
+`POST /api/v1/purchases`, `/credit-notes` and `/debit-notes` take this identical body — `gst` block included — under `voucher` instead of `invoice`. They are one shape with one builder behind them; only the accounting direction differs, and the endpoint applies it. Send positive magnitudes and do not encode signs yourself.
+
+On a purchase the `gst` block carries the **supplier's** registration type, state and GSTIN, and stamps them on the voucher. Send them. Omit them and the voucher falls back to whatever the party ledger master happens to hold.
+
+::: tip `gst` does not control input credit
+The block is party and place-of-supply context, nothing more. Whether ITC is claimed follows from the ledgers you post to — the purchase or expense ledger in each item's `accounting_allocations`, and the tax ledgers in `ledger_entries`. A purchase where the buyer absorbs the tax is expressed by posting to a ledger configured that way, not by dropping `gst`.
+:::
+
 ## 2. Retain the transaction
 
 ```json
