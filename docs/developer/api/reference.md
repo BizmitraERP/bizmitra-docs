@@ -76,6 +76,11 @@ Profit & Loss and TDS bills follow a two-step pattern: `POST …/refresh` asks t
 | `POST` | `/api/v1/masters/{type}` | Create a master |
 | `GET` | `/api/v1/masters/{type}?company_id={id}` | List master jobs |
 | `GET` | `/api/v1/masters/{type}/{job}` | Status of one master job |
+| `GET` | `/api/v1/pulled-masters/{type}?company_id={id}` | List masters read back from Tally |
+
+`{type}` is one of `group`, `ledger`, `currency`, `unit`, `godown`, `stock_group`, `stock_category`, `stock_item`, `voucher_type`. Hyphens are accepted (`stock-item`).
+
+The first three endpoints report **your pushes**. `pulled-masters` reports **what exists in the customer's company** — it requires the `pull.master` capability and the masters pull enabled for that company. List filters: `limit` (max 200), `offset`.
 
 See [Masters](/developer/tally/masters).
 
