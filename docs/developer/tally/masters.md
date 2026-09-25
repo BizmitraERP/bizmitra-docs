@@ -88,6 +88,16 @@ Each row carries the master's fields under `payload`:
           "parent": "Sales",
           "reserved_name": "Sales",
           "numbering_method": "Manual",
+          "numbering_sub_method": "Auto Renumber",
+          "numbering_series": [
+            {
+              "name": "Default",
+              "numbering_method": "Manual",
+              "numbering_sub_method": "Auto Renumber",
+              "prevent_duplicates": "No",
+              "is_default": "No"
+            }
+          ],
           "is_active": "Yes",
           "affects_stock": "No"
         },
@@ -112,7 +122,7 @@ Each row carries the master's fields under `payload`:
 | `stock_group` | `parent`, `base_units`, `is_batchwise`, `closing_balance`, `closing_value` |
 | `stock_category` | `parent` |
 | `stock_item` | `parent`, `category`, `base_units`, `opening_balance`, `closing_balance`, `closing_value`, `gst_applicable` |
-| `voucher_type` | `parent`, `reserved_name`, `numbering_method`, `is_active`, `affects_stock` |
+| `voucher_type` | `parent`, `reserved_name`, `numbering_method`, `numbering_sub_method`, `numbering_series`, `is_active`, `affects_stock` |
 
 ::: warning Values are Tally's, verbatim
 Fields are passed through unmodified — no casing, type coercion, or normalization. Booleans arrive as Tally's `"Yes"` / `"No"` strings, not JSON `true` / `false`, and text like `numbering_method` arrives as Tally spells it. Compare case-insensitively rather than against an exact literal.
@@ -122,20 +132,40 @@ Fields are passed through unmodified — no casing, type coercion, or normalizat
 
 This is the endpoint to build an admin or preflight screen on, instead of relying on someone remembering what they configured during onboarding.
 
-The common check is voucher-type numbering. If your integration posts vouchers with numbers you generate, the target voucher type must be on **Manual** numbering — on Automatic, Tally assigns its own number and your reference no longer matches:
+The common check is voucher-type numbering. If your integration posts vouchers with numbers you generate, you need to know whether Tally will keep your number or assign its own. `numbering_method` is one of Tally's five settings:
+
+| `numbering_method` | Your `voucher_number` |
+|---|---|
+| `Manual` | kept |
+| `Automatic (Manual Override)` | kept — this is Tally's default on a new voucher type |
+| `Automatic` | **discarded**; Tally assigns its own |
+| `Multi-user Auto` | **discarded**; Tally assigns its own |
+| `None` | the voucher carries no number at all |
 
 ```js
 const { masters } = await api.get('/api/v1/pulled-masters/voucher_type', {
   params: { company_id: companyId },
 })
 
-const type = masters.find(m => m.master_name === postingVoucherType)
-const method = type?.payload?.fields?.numbering_method ?? ''
+// Allowlist what keeps your number, so an unrecognised value warns rather than
+// passing silently — a missed warning means a wrong number on a real invoice.
+const KEEPS_YOUR_NUMBER = ['manual', 'automatic (manual override)']
 
-if (method.toLowerCase() !== 'manual') {
-  warn(`${postingVoucherType} is set to "${method}" — expected Manual`)
+const type = masters.find(m => m.master_name === postingVoucherType)
+const method = (type?.payload?.fields?.numbering_method ?? '').toLowerCase()
+
+if (!KEEPS_YOUR_NUMBER.includes(method)) {
+  warn(`${postingVoucherType} is set to "${method}" — Tally will assign its own number`)
 }
 ```
+
+::: tip Where this value comes from
+TallyPrime keeps a voucher type's numbering on its **numbering series**, not on the voucher type itself. The voucher type carries a field of the same name, but Tally stamps it once at creation and never updates it — so it commonly reads `Automatic (Manual Override)`, or `None` on types Tally derives itself, no matter what the voucher-type screen shows. `numbering_method` here is read from the series, so it matches the screen.
+
+`numbering_sub_method` is the "numbering behaviour on insertion/deletion" setting: `Auto Renumber` (Renumber Vouchers), `Auto Retain` (Retain Original Voucher No.), or `Default` when it was never changed.
+
+A voucher type can run **several numbering series**, in which case no single value describes it — `numbering_method` reflects the default series, and `numbering_series` lists them all.
+:::
 
 Two fields make this check more robust than name matching alone:
 
