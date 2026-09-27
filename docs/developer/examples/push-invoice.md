@@ -100,6 +100,51 @@ On a purchase the `gst` block carries the **supplier's** registration type, stat
 The block is party and place-of-supply context, nothing more. Whether ITC is claimed follows from the ledgers you post to — the purchase or expense ledger in each item's `accounting_allocations`, and the tax ledgers in `ledger_entries`. A purchase where the buyer absorbs the tax is expressed by posting to a ledger configured that way, not by dropping `gst`.
 :::
 
+### An invoice with no stock items
+
+A consultancy fee, room revenue, an expense bill booked straight to a ledger — anything with nothing to put in an inventory block. **Omit `inventory_entries` entirely** and put the income or expense ledger in `ledger_entries` beside the party and the tax lines:
+
+```json
+{
+  "event_type": "invoice_create",
+  "request_type": "in",
+  "invoice": {
+    "voucher_type": "Sales",
+    "voucher_number": "INV-SRV-001",
+    "date": "2026-06-01",
+    "party_ledger": "Example Customer",
+    "gst": {
+      "registration_type": "Regular",
+      "place_of_supply": "Gujarat",
+      "state": "Gujarat",
+      "party_gstin": "24AAAAA0000A1Z5"
+    },
+    "ledger_entries": [
+      { "ledger_name": "Example Customer",   "amount": -29500, "is_party": true },
+      { "ledger_name": "Consultancy Income", "amount":  25000 },
+      { "ledger_name": "CGST",               "amount":   2250, "is_tax": true },
+      { "ledger_name": "SGST",               "amount":   2250, "is_tax": true }
+    ]
+  }
+}
+```
+
+Tally calls this an **accounting invoice**, as opposed to the *item invoice* above, and the two are genuinely different voucher shapes inside Tally. You do not select between them: the connector decides from whether you sent inventory lines, and sets Tally's mode accordingly. There is no field for it — anything you send named `is_item_invoice` is ignored.
+
+**The lines must sum to zero.** `-29500 + 25000 + 2250 + 2250 = 0`. On an item invoice the revenue side rides inside `accounting_allocations`, so the top-level lines do not balance on their own; here they are the entire voucher, so they must.
+
+::: danger `is_party` belongs on the party line, and only there
+It does two things at once: it supplies the voucher total, and it removes that line from the lines being posted. Put it on `Consultancy Income` and you delete the income side and give the party the wrong total — an invoice for ₹25,000 with no particulars.
+
+Tally does **not** reject that. It answers `200` with `Errors: 0, Exceptions: 1` and parks an incomplete voucher carrying the party name and nothing else, which reads as a successful push from your side and is only visible by opening the voucher in Tally. Bizmitra now refuses such a payload before sending and names the mis-flagged ledger, but the rule is worth knowing: **one `is_party`, on the party.**
+:::
+
+The same applies to `/purchases`, `/credit-notes` and `/debit-notes`. It does **not** apply to orders — Tally has no accounting-only Sales Order or Purchase Order, so an order without `inventory_entries` is rejected.
+
+::: info Requires connector v0.0.42
+Earlier connectors could not post an accounting invoice at all: a payload with no inventory failed outright, and one with `"inventory_entries": []` was accepted and then silently discarded by Tally.
+:::
+
 ## 2. Retain the transaction
 
 ```json

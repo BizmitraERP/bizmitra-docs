@@ -33,7 +33,7 @@ The document shape is common across kinds — see [Data model](/developer/platfo
 
 | Kind | `inventory_entries` | `ledger_entries` | Notes |
 |---|---|---|---|
-| Invoice, purchase | Usually | Always | Goods invoices carry both; service invoices carry only ledger entries |
+| Invoice, purchase | Optional | Always | Goods invoices carry both; a service invoice or expense bill carries only ledger entries — see [an invoice with no stock items](/developer/examples/push-invoice#an-invoice-with-no-stock-items) |
 | Credit / debit note | Usually | Always | Should reference the original document |
 | Receipt, payment | No | Always | Money movement only |
 | Contra | No | Always | Between the business's own accounts |
