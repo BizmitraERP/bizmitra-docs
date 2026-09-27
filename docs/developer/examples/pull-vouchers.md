@@ -90,6 +90,7 @@ Accept: application/json
     "invoice_json": {
       "date": "2026-06-01",
       "party_ledger": "Example Customer",
+      "vch_entry_mode": "Item Invoice",
       "inventory_entries": [
         {
           "stock_item": "Example Item",
@@ -110,6 +111,16 @@ Accept: application/json
 ```
 
 The list gives you metadata; the detail gives you `invoice_json`, the normalized document. See [Data model](/developer/platform-concepts/data-model).
+
+### Telling an item invoice from an accounting one
+
+`vch_entry_mode` carries Tally's own value verbatim — `"Item Invoice"` or `"Accounting Invoice"` — and is `null` on kinds that have no such mode (journals, receipts, payments). It is there for audit and cross-checking.
+
+::: warning Classify on `inventory_entries`, not on the inventory block
+Tally exports an **empty** inventory block on an accounting invoice rather than omitting it. Code that asks "does this voucher have an inventory section?" will call every accounting invoice an item invoice.
+
+Ask whether `inventory_entries` has any lines. That is the same question Bizmitra asks when building a voucher in the other direction, so the two stay consistent.
+:::
 
 ## 3. Process idempotently
 
