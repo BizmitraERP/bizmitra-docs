@@ -14,6 +14,9 @@ Every accounting document Bizmitra handles — invoice, purchase, receipt, journ
   "reference": "PO-DEMO-001",
   "party_ledger": "Example Customer",
   "gst": { "...": "statutory context" },
+  "buyer": { "...": "who is billed" },
+  "consignee": { "...": "where the goods went" },
+  "dispatch": { "...": "how they travelled" },
   "inventory_entries": [ "...what moved" ],
   "ledger_entries": [ "...where the money went" ]
 }
@@ -93,6 +96,42 @@ Per-line rates live with the line, not the document, because a single invoice ca
   { "duty_head": "SGST/UTGST", "rate": 9 }
 ]
 ```
+
+## Who is billed, and where the goods went
+
+`gst` says how the transaction is taxed. Three further blocks say who and where — and they are separate from `gst` because a sale can be billed to one party and delivered to another.
+
+```json
+"buyer":     { "name": "...", "mailing_name": "...", "address": ["..."],
+               "pincode": "...", "state": "...", "country": "...", "gstin": "..." },
+"consignee": { "name": "...", "pincode": "...", "state": "...",
+               "country": "...", "gstin": "..." },
+"dispatch":  { "doc_no": "...", "date": "2026-06-01", "through": "...",
+               "destination": "...", "place_of_receipt": "...",
+               "vessel_flight_no": "...", "order_reference": "...",
+               "payment_terms": "...", "delivery_note_no": "...",
+               "delivery_note_date": "2026-05-31" }
+```
+
+**`buyer`** is the bill-to party — the block a printed invoice puts under *Buyer (Bill to)*. `name` falls back to `party_ledger`, so it only needs setting when the billing name differs from the ledger name.
+
+**`consignee`** is the ship-to party, and `consignee.state` is the field that makes the block worth having: it is the **delivery** state, held independently of the buyer's state in `gst`. Without it a "bill to Rajasthan, deliver to Gujarat" sale cannot be represented at all — and it is what an e-way bill and any ship-to GST determination are read from. Only your system knows where the goods actually went.
+
+**`dispatch`** is the shipping record: carrier, destination, dispatch document, and the delivery note the voucher was raised against. `buyer.address` is an array of lines; on a write, a single newline-separated string is accepted too.
+
+::: warning A consignee has no street address on the voucher
+Tally keeps consignee street lines in the party ledger's **address book** and stores only a reference to the chosen entry on the voucher. So `consignee` carries the name, pincode, state, country and GSTIN — the fields that drive reporting — and no usable address lines. A `consignee.address` you send is accepted rather than rejected, but it does not reach Tally, and it reads back as an empty array. Put a ship-to street address on the ledger master.
+:::
+
+::: warning Optional writing, `null` reading
+All three blocks are optional on a write, field by field, and an omitted or `null` field means "I have nothing for this" — never "clear what Tally holds". Omit a block and Tally keeps inferring those fields from the party ledger master.
+
+Reading, a block is `null` — not an empty object — when the voucher carries none of that data, which is the common case and always true for a journal or a payment. Test the block before reaching into it.
+:::
+
+`buyer.state` and `buyer.gstin` are the same two voucher fields as `gst.state` and `gst.party_gstin`. Send them in whichever block fits your data model; `gst` wins if both are set.
+
+These blocks are **symmetric**: the names you write are the names you read back, so a voucher pulled from Tally can be pushed again without remapping. That is not true of everything — see below.
 
 ## Reading vs writing
 
