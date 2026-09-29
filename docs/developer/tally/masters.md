@@ -85,6 +85,7 @@ Each row carries the master's fields under `payload`:
         "master_type": "voucher_type",
         "name": "Sales Bizmitra",
         "fields": {
+          "aliases": [],
           "parent": "Sales",
           "reserved_name": "Sales",
           "numbering_method": "Manual",
@@ -110,7 +111,7 @@ Each row carries the master's fields under `payload`:
 
 ### What each type exposes
 
-`payload.fields` varies by type. Every type also carries `name` and `tally.guid` / `master_id` / `alter_id`.
+`payload.fields` varies by type. Every type also carries `name`, `aliases` (see [Aliases](#aliases)) and `tally.guid` / `master_id` / `alter_id`.
 
 | Type | Fields |
 |---|---|
@@ -188,6 +189,61 @@ Practical consequences:
 - Normalize on **your** side before sending, and be consistent about it.
 - Watch for trailing whitespace. It is invisible, survives copy-paste, and is a real cause of mismatches.
 - Store the resolved master name against your own record once it works, rather than reconstructing it each time.
+
+### Aliases
+
+A Tally master can answer to more than one name. The customer sets an alias so they can type `EC` instead of `Example Customer` during voucher entry, and it is genuinely how many of them work day to day — which means the name your user gives you is quite often an alias, not the master name.
+
+`aliases` comes back on every pulled master:
+
+```json
+{
+  "master_type": "ledger",
+  "master_name": "Example Customer",
+  "payload": {
+    "kind": "master",
+    "master_type": "ledger",
+    "name": "Example Customer",
+    "fields": {
+      "aliases": ["EC", "EXC"],
+      "parent": "Sundry Debtors",
+      "gstin": "24AAAAA0000A1Z5"
+    },
+    "tally": { "guid": "…", "master_id": "…", "alter_id": "917" }
+  }
+}
+```
+
+**It is a list, and a master can hold several.** The ledger above answers to `Example Customer`, `EC` and `EXC`, and all three work in Tally's voucher entry. Code that reads `aliases[0]` and stops will match one customer's shorthand and miss another's.
+
+**Every master type carries it**, and it is `[]` — never `null` and never absent — when the master has no alias. Tally's own built-in groups ship with aliases already set (`Indirect Expenses` also answers to `Expenses (Indirect)`), so you will see populated lists in a company nobody has customized.
+
+The practical use is **resolution, not sending**: match what your user typed against `name` *and* `aliases`, then send the `name`. Store the resolved `name` against your record, as with any other master — it is the value the rest of the API reports and the one your mapping should hold.
+
+```js
+// Resolve a user-supplied name to the master it means.
+const { masters } = await api.get('/api/v1/pulled-masters/ledger', {
+  params: { company_id: companyId },
+})
+
+const wanted = input.trim().toLowerCase()
+const match = masters.find(m => {
+  const fields = m.payload?.fields ?? {}
+  return [m.payload?.name, ...(fields.aliases ?? [])]
+    .some(n => n?.trim().toLowerCase() === wanted)
+})
+
+// Send the master's own name, not what the user typed.
+const partyLedger = match?.payload?.name
+```
+
+::: info Requires connector v0.0.44
+Older connectors return no `aliases` key at all. Read it defensively (`fields.aliases ?? []`) so a company on an older build degrades to name-only matching rather than throwing.
+:::
+
+::: tip Aliases change without the name changing
+Adding an alias is an alter, so `tally.alter_id` moves and the master re-syncs — but `name` is unchanged, and a check that compares only names will report "nothing changed". If you cache a resolution table, rebuild it on `alter_id`, not on the name.
+:::
 
 ## Do not create masters casually
 
