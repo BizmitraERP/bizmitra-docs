@@ -35,10 +35,32 @@ The document shape is common across kinds — see [Data model](/developer/platfo
 |---|---|---|---|
 | Invoice, purchase | Optional | Always | Goods invoices carry both; a service invoice or expense bill carries only ledger entries — see [an invoice with no stock items](/developer/examples/push-invoice#an-invoice-with-no-stock-items) |
 | Credit / debit note | Usually | Always | Should reference the original document |
-| Receipt, payment | No | Always | Money movement only |
+| Receipt, payment | No | Always | Money movement. Add `bill_allocations` to the party line to say which invoices it settles — see below |
 | Contra | No | Always | Between the business's own accounts |
 | Journal | No | Always | Adjustments; must balance |
 | Sales order | Usually | Rarely | An order is not yet a financial posting |
+
+### Settling invoices from a receipt or payment
+
+A receipt that only moves money leaves Tally guessing which invoices it paid, and Tally does not guess — it parks the amount as unallocated, and the customer's Bills Outstanding report keeps showing the invoices open. Nothing errors; the ledger balance is correct.
+
+Name the bills on the party line:
+
+```json
+{
+  "ledger_name": "Acme Pvt Ltd", "amount": 10000, "is_debit": false, "is_party": true,
+  "bill_allocations": [
+    { "name": "Bm/26-27/1", "bill_type": "Agst Ref", "amount": 5000 },
+    { "name": "Bm/26-27/2", "bill_type": "Agst Ref", "amount": 5000 }
+  ]
+}
+```
+
+One receipt can clear several invoices, which is why this is a list rather than a field. `bill_type` is `Agst Ref` when settling an existing bill, `New Ref` when opening one, `Advance` for money taken before the bill exists, and `On Account` for a deliberately unallocated amount (the only type that carries no `name`). It defaults to `Agst Ref` when you supply a name.
+
+An `Agst Ref` name must match a bill genuinely outstanding for that party. It is not free text — Tally rejects the voucher if it cannot find the bill. Full field rules in [Data model](/developer/platform-concepts/data-model#bill-wise-allocations).
+
+Pulled vouchers carry the same field, on every kind: an invoice that opened a bill reports `New Ref`, a receipt that cleared one reports `Agst Ref`. So a pulled voucher can be pushed back unchanged.
 
 ## Reading vouchers
 

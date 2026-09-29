@@ -44,6 +44,40 @@ Amounts in `ledger_entries` are **signed**, and the signs are not decorative —
 
 Get a sign wrong and you have not made a formatting mistake — you have posted the opposite transaction. Tally may accept it. The customer's accountant will find it later.
 
+## Bill-wise allocations
+
+A ledger entry can carry `bill_allocations` — the bills that line opens or settles.
+
+```json
+{
+  "ledger_name": "Acme Pvt Ltd", "amount": 10000, "is_debit": false, "is_party": true,
+  "bill_allocations": [
+    { "name": "Bm/26-27/1", "bill_type": "Agst Ref", "amount": 5000 },
+    { "name": "Bm/26-27/2", "bill_type": "Agst Ref", "amount": 5000 }
+  ]
+}
+```
+
+This is a different question from the amount. The amount says ten thousand rupees arrived from Acme; the allocations say five of it clears one invoice and five clears another. Tally tracks those separately, and only the allocations feed Bills Outstanding and ageing.
+
+Omit them and nothing errors. The ledger balance is right, the receipt appears in the day book, and the money sits unallocated — so the customer's outstanding report still shows both invoices unpaid. That is the failure mode: silent, and visible only to whoever chases the debtors.
+
+`bill_type` is Tally's four-valued type of reference.
+
+| `bill_type` | Means | Typical on |
+|---|---|---|
+| `New Ref` | Opens a new bill | Sales, purchase |
+| `Agst Ref` | Settles an existing bill | Receipt, payment |
+| `Advance` | Money moved before the bill exists | Receipt, payment |
+| `On Account` | Deliberately unallocated — carries no `name` | Any |
+
+Two rules worth knowing before you send one:
+
+- An `Agst Ref` `name` must match a bill **actually outstanding for that party**. It is not a free-text reference. Send one Tally cannot find and it parks the whole voucher as an import exception rather than posting it partially.
+- The allocation `amount` is a magnitude; its sign is taken from the ledger line. You can omit it when a line settles exactly one bill, and the whole line is allocated.
+
+There is no credit-period or due-date field. Tally accepts one on import and ignores it, and does not export it on the voucher — so it is omitted rather than offered as a key that quietly does nothing.
+
 ## `voucher_kind` vs `voucher_type`
 
 This distinction catches people out constantly.

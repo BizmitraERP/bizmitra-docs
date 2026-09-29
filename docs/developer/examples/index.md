@@ -10,6 +10,7 @@ Nearly every integration is one of these, or both.
 |---|---|---|
 | Tally → your product | [Pull vouchers from Tally](/developer/examples/pull-vouchers) | List, fetch, process idempotently, acknowledge |
 | Your product → Tally | [Create an invoice in Tally](/developer/examples/push-invoice) | Submit, retain the transaction, verify the Tally result |
+| Your product → Tally | [Settle invoices with a receipt](/developer/examples/push-receipt) | Record money received against the specific bills it pays |
 
 Plus the [Postman collection](/developer/examples/postman), which is the most complete executable reference to the API today.
 

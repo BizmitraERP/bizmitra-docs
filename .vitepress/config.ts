@@ -141,6 +141,7 @@ export default withMermaid(defineConfig({
             { text: 'Overview', link: '/developer/examples/' },
             { text: 'Pull vouchers from Tally', link: '/developer/examples/pull-vouchers' },
             { text: 'Create an invoice in Tally', link: '/developer/examples/push-invoice' },
+            { text: 'Settle invoices with a receipt', link: '/developer/examples/push-receipt' },
             { text: 'Postman collection', link: '/developer/examples/postman' },
           ],
         },
