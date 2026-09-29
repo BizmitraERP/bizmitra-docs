@@ -153,6 +153,34 @@ Most vouchers carry none of this, and a journal or a payment never will. Test th
 
 `consignee.address` comes back as an empty array. Tally does not hold consignee street lines on the voucher — they live in the party ledger's address book, referenced by id — so there is nothing to return. The field is kept so the block matches the push shape; read the ship-to street address from the ledger master instead.
 
+### Which bills a voucher opened or settled
+
+Ledger entries carry `bill_allocations` — the bill-wise references Tally keeps against the party. This is how you reconstruct who owes what: an invoice reports the bill it opened, a receipt or payment reports the bills it cleared.
+
+```json
+"ledger_entries": [
+  {
+    "ledger_name": "Acme Pvt Ltd", "amount": 10000, "is_debit": false, "is_party": true,
+    "bill_allocations": [
+      { "name": "Bm/26-27/1", "bill_type": "Agst Ref", "amount": 5000 },
+      { "name": "Bm/26-27/2", "bill_type": "Agst Ref", "amount": 5000 }
+    ]
+  }
+]
+```
+
+`bill_type` is `New Ref` when the voucher opened the bill and `Agst Ref` when it settled one, with `Advance` and `On Account` for the remaining two cases. A single line can settle several bills, which is why it is a list.
+
+::: warning `amount` carries Tally's sign
+The allocation takes the same sign as the ledger line it sits on — positive on a receipt's credited party line, negative on a sales invoice's debited one. Take the absolute value if you are summing settlements, and do not read the sign as "credit note".
+
+The push side ignores the sign entirely and re-derives it from the line, so a pulled voucher still pushes back unchanged.
+:::
+
+A line with no bill-wise data returns `[]`, never a list of nulls — Tally pads most party lines with an empty block and those are dropped. Bills whose party ledger does not keep balances bill-by-bill have no allocations at all, which is a configuration fact about that ledger rather than missing data.
+
+There is no credit-period or due-date field: Tally exports the tag blank even for a bill that has one. Read due dates from the ledger's outstanding report instead.
+
 ### Telling an item invoice from an accounting one
 
 `vch_entry_mode` carries Tally's own value verbatim — `"Item Invoice"` or `"Accounting Invoice"` — and is `null` on kinds that have no such mode (journals, receipts, payments). It is there for audit and cross-checking.
