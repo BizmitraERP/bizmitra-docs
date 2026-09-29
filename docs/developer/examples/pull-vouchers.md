@@ -89,6 +89,8 @@ Accept: application/json
     "voucher_number": "INV-DEMO-001",
     "invoice_json": {
       "date": "2026-06-01",
+      "reference": "PO-DEMO-001",
+      "reference_date": "2026-05-28",
       "party_ledger": "Example Customer",
       "vch_entry_mode": "Item Invoice",
       "buyer": {
@@ -150,6 +152,16 @@ Most vouchers carry none of this, and a journal or a payment never will. Test th
 `consignee.state` is the **delivery** state and is independent of the buyer's state in `gst`. On a "bill to one state, deliver to another" sale the two differ, and that difference is the whole reason to read this block rather than assuming the buyer's address.
 
 `dispatch.delivery_note_no` is the delivery note the invoice was raised against. Tally stores it nested in its own block rather than as a plain voucher field, which is why it appears here and not under `reference`.
+
+### The voucher reference
+
+`reference` and `reference_date` are Tally's single free-text reference and its date, read back under the names [the push side accepts](/developer/examples/push-invoice#the-voucher-reference). **On a pulled purchase this is the Supplier Invoice No. and date** — the pair GSTR-2B reconciliation is done on, and usually the most valuable field on the voucher if you are ingesting purchases.
+
+Both are `null` when the voucher carries none, which is common on internally-generated vouchers and normal on journals and contras.
+
+::: info Requires connector v0.0.44 for `reference_date`
+`reference` has always been returned. `reference_date` is new, so a voucher pulled by an older connector has the number without its date — treat a missing `reference_date` as unknown rather than as "same as the voucher date".
+:::
 
 `consignee.address` comes back as an empty array. Tally does not hold consignee street lines on the voucher — they live in the party ledger's address book, referenced by id — so there is nothing to return. The field is kept so the block matches the push shape; read the ship-to street address from the ledger master instead.
 

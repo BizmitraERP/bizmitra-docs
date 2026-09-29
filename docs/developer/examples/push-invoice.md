@@ -90,6 +90,37 @@ Content-Type: application/json
 
 **Every name must exist.** `Example Customer`, `Example Item`, `Nos`, `Main Location`, `Sales`, `CGST`, `SGST` must all exist in the target company, matching exactly. This is the most common cause of a first write failing. See [Masters](/developer/tally/masters).
 
+### The voucher reference
+
+`reference` is the one free-text reference Tally keeps per voucher, and **what it means depends on the voucher type**. On a sales invoice it is the buyer's order or reference number. On a purchase it is the **Supplier Invoice No.** — your supplier's own invoice number, which Tally matches against GSTR-2B when the customer claims input credit. Sending it there is not cosmetic; without it that reconciliation has nothing to match on.
+
+`reference_date` is its date — the Supplier Invoice date on a purchase:
+
+```json
+{
+  "voucher": {
+    "voucher_type": "Purchase",
+    "voucher_number": "PUR-DEMO-001",
+    "date": "2026-04-01",
+    "reference": "SUP/2026/0042",
+    "reference_date": "2026-03-28",
+    "party_ledger": "Example Supplier"
+  }
+}
+```
+
+Both fields are optional and both work on every voucher family — invoices, orders, purchases, credit and debit notes, receipts, payments, contras and journals.
+
+**`reference_date` defaults to the voucher date.** Send `reference` alone and Tally stores the voucher's own date beside it, which is what it does when someone types a supplier invoice number in the UI and leaves the date alone. Send it explicitly whenever the supplier's invoice predates your entry, as it usually does — a wrong Supplier Invoice date is a reconciliation mismatch in the same way a missing one is.
+
+The pull side returns both under the same names, so a voucher read out of Tally pushes back with its reference intact.
+
+::: warning Requires connector v0.0.44
+Earlier connectors accepted `reference` and silently discarded it: the request succeeded, the job completed, and the stored voucher came back with the tag empty. If a customer is on an older build, the field will not land — check the connector version before concluding the value was wrong.
+
+Sales orders are the partial exception: they carried `reference` before v0.0.44, but never `reference_date`.
+:::
+
 ### Bill-to, ship-to and dispatch
 
 Three optional blocks — `buyer`, `consignee` and `dispatch` — carry who is billed, where the goods go, and how they travelled. Add them beside `gst`:
