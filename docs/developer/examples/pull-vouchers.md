@@ -91,6 +91,33 @@ Accept: application/json
       "date": "2026-06-01",
       "party_ledger": "Example Customer",
       "vch_entry_mode": "Item Invoice",
+      "buyer": {
+        "name": "Example Customer",
+        "mailing_name": "Example Customer Pvt Ltd",
+        "address": ["1st Road", "2nd Road"],
+        "pincode": "444444",
+        "country": "India"
+      },
+      "consignee": {
+        "name": "Example Warehouse",
+        "address": [],
+        "pincode": "382110",
+        "state": "Gujarat",
+        "country": "India",
+        "gstin": "24BBBBB0000B1Z5"
+      },
+      "dispatch": {
+        "doc_no": "DC-9",
+        "date": "2026-06-01",
+        "through": "Blue Dart",
+        "destination": "Ahmedabad",
+        "place_of_receipt": "Gandhinagar",
+        "vessel_flight_no": null,
+        "order_reference": null,
+        "payment_terms": "30 Days",
+        "delivery_note_no": "DN-3",
+        "delivery_note_date": "2026-05-31"
+      },
       "inventory_entries": [
         {
           "stock_item": "Example Item",
@@ -111,6 +138,20 @@ Accept: application/json
 ```
 
 The list gives you metadata; the detail gives you `invoice_json`, the normalized document. See [Data model](/developer/platform-concepts/data-model).
+
+### Bill-to, ship-to and dispatch
+
+`buyer`, `consignee` and `dispatch` use the **same field names the push side accepts**, so a voucher read out of Tally can be written back without remapping — read [the push reference](/developer/examples/push-invoice#bill-to-ship-to-and-dispatch) for what each field means.
+
+::: warning Each block is `null`, not empty, when the voucher has no such data
+Most vouchers carry none of this, and a journal or a payment never will. Test the block itself — `if (v.consignee)` — rather than reaching into `v.consignee.state` and finding `undefined`. `buyer` is the exception that is usually present: its `name` falls back to the party ledger, so a voucher with no separate bill-to still returns a `buyer` whose `address` is an empty array.
+:::
+
+`consignee.state` is the **delivery** state and is independent of the buyer's state in `gst`. On a "bill to one state, deliver to another" sale the two differ, and that difference is the whole reason to read this block rather than assuming the buyer's address.
+
+`dispatch.delivery_note_no` is the delivery note the invoice was raised against. Tally stores it nested in its own block rather than as a plain voucher field, which is why it appears here and not under `reference`.
+
+`consignee.address` comes back as an empty array. Tally does not hold consignee street lines on the voucher — they live in the party ledger's address book, referenced by id — so there is nothing to return. The field is kept so the block matches the push shape; read the ship-to street address from the ledger master instead.
 
 ### Telling an item invoice from an accounting one
 

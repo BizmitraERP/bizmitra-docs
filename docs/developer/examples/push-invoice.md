@@ -90,11 +90,76 @@ Content-Type: application/json
 
 **Every name must exist.** `Example Customer`, `Example Item`, `Nos`, `Main Location`, `Sales`, `CGST`, `SGST` must all exist in the target company, matching exactly. This is the most common cause of a first write failing. See [Masters](/developer/tally/masters).
 
+### Bill-to, ship-to and dispatch
+
+Three optional blocks — `buyer`, `consignee` and `dispatch` — carry who is billed, where the goods go, and how they travelled. Add them beside `gst`:
+
+```json
+{
+  "invoice": {
+    "party_ledger": "Example Customer",
+    "gst": {
+      "registration_type": "Regular",
+      "place_of_supply": "Rajasthan",
+      "state": "Rajasthan",
+      "party_gstin": "24AAAAA0000A1Z5"
+    },
+    "buyer": {
+      "name": "Example Customer",
+      "mailing_name": "Example Customer Pvt Ltd",
+      "address": ["1st Road", "2nd Road"],
+      "pincode": "444444",
+      "country": "India"
+    },
+    "consignee": {
+      "name": "Example Warehouse",
+      "pincode": "382110",
+      "state": "Gujarat",
+      "country": "India",
+      "gstin": "24BBBBB0000B1Z5"
+    },
+    "dispatch": {
+      "doc_no": "DC-9",
+      "date": "2026-06-01",
+      "through": "Blue Dart",
+      "destination": "Ahmedabad",
+      "place_of_receipt": "Gandhinagar",
+      "vessel_flight_no": null,
+      "delivery_note_no": "DN-3",
+      "delivery_note_date": "2026-05-31",
+      "payment_terms": "30 Days"
+    }
+  }
+}
+```
+
+**Everything here is optional, at every level.** Omit a block and Tally keeps inferring those fields from the party ledger master, exactly as it did before these blocks existed. Inside a block, a field you send as `null` or `""` is treated as absent rather than as an instruction to clear the value — so a partly-populated customer record never blanks out what Tally already knows. There is no "clear this field" form of these blocks; to change a stored value, send the new one.
+
+**`buyer` is the bill-to party.** It fills the block the printed invoice puts under *Buyer (Bill to)*. `name` defaults to `party_ledger`, so you only set it when billing under a different name from the ledger's; `mailing_name` is the longer legal name where the two differ.
+
+**`consignee` is the ship-to party, and `consignee.state` is the field that earns the block.** It is the *delivery* state, held independently of the buyer's state in `gst` — which is what makes a "bill to Rajasthan, deliver to Gujarat" sale representable at all, and what an e-way bill and any ship-to GST determination are read from. The block does **not** default to the buyer: when goods go to the buyer's own address, leave it out and let Tally use the party's address.
+
+::: warning The consignee's street lines are not a voucher field
+`consignee` takes `name`, `pincode`, `state`, `country` and `gstin` — but **not** usable street lines. Tally does not store a consignee address on the voucher: it keeps the lines in the party ledger's address book and the voucher references the chosen entry by id. Ten candidate tags were tested against a live TallyPrime 7 and all were discarded.
+
+`consignee.address` is still accepted rather than rejected, so a payload built from a full address record does not error — but the lines will not appear in Tally or on the printed invoice, and they come back empty on the pull side. Put the ship-to street address on the ledger master if you need it to print.
+:::
+
+**`dispatch` is the shipping record** — carrier, destination, dispatch document, and the delivery-note reference this invoice is raised against. Dates are ISO `YYYY-MM-DD`; a date that cannot be parsed drops that single field rather than failing the push, so a bad `dispatch.date` never costs you the voucher.
+
+::: tip `state` and `gstin` can go in either block
+`buyer.state` and `buyer.gstin` are the same two voucher fields as `gst.state` and `gst.party_gstin`. Send them wherever they fit your data model — next to the rest of the address, or next to the rest of the GST context. If you set both, `gst` wins. They are written to Tally once either way.
+:::
+
+The same three blocks come back on the [pull side](/developer/examples/pull-vouchers) under the same names, so a voucher read out of Tally can be pushed back without remapping.
+
 ### The same body covers purchases, credit notes and debit notes
 
-`POST /api/v1/purchases`, `/credit-notes` and `/debit-notes` take this identical body — `gst` block included — under `voucher` instead of `invoice`. They are one shape with one builder behind them; only the accounting direction differs, and the endpoint applies it. Send positive magnitudes and do not encode signs yourself.
+`POST /api/v1/purchases`, `/credit-notes` and `/debit-notes` take this identical body — `gst`, `buyer`, `consignee` and `dispatch` blocks included — under `voucher` instead of `invoice`. They are one shape with one builder behind them; only the accounting direction differs, and the endpoint applies it. Send positive magnitudes and do not encode signs yourself.
 
-On a purchase the `gst` block carries the **supplier's** registration type, state and GSTIN, and stamps them on the voucher. Send them. Omit them and the voucher falls back to whatever the party ledger master happens to hold.
+`POST /api/v1/orders` takes them too. On an order, `consignee` is often the whole point: the delivery address is agreed when the order is placed, and it carries through to the invoice that follows.
+
+On a purchase the `gst` block carries the **supplier's** registration type, state and GSTIN, and stamps them on the voucher. Send them. Omit them and the voucher falls back to whatever the party ledger master happens to hold. `buyer` likewise describes the supplier on a purchase, and `consignee` the place you received the goods.
 
 ::: tip `gst` does not control input credit
 The block is party and place-of-supply context, nothing more. Whether ITC is claimed follows from the ledgers you post to — the purchase or expense ledger in each item's `accounting_allocations`, and the tax ledgers in `ledger_entries`. A purchase where the buyer absorbs the tax is expressed by posting to a ledger configured that way, not by dropping `gst`.
