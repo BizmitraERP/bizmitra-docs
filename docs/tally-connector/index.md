@@ -15,9 +15,25 @@ The API-level detail is in the [Developer Platform](/developer/) section — [Th
 | [How it all fits together](/tally-connector/how-it-works) | The app, the pairing code, and the two kinds of "company" |
 | [Install and pair](/tally-connector/install-and-pair) | Getting it running the first time |
 | [Adding and changing companies](/tally-connector/companies) | Add a company, swap one for another, stop syncing one |
-| [Sync settings](/tally-connector/sync-settings) | Business Hours, Pause, and how hard the Connector works Tally |
+| [Several customers on one computer](/tally-connector/customer-profiles) | Running more than one client's books from one install |
+| [Sync settings](/tally-connector/sync-settings) | Business hours, Paused, and how hard the Connector works Tally |
+| [Health checks](/tally-connector/health) | What the Connector says about its own state |
 | [Troubleshooting](/tally-connector/troubleshooting) | Tally freezing, nothing syncing, wrong data |
+| [Sharing logs with support](/tally-connector/support-logs) | What support can ask for, and what you approve |
 | [FAQ](/tally-connector/faq) | The questions that come up most |
+
+## Finding your way around the app
+
+| Screen | What is on it |
+|---|---|
+| **Home** | One status, and the next step if something needs you |
+| **Companies** | **Linked** — what is syncing, with the account company beside it. **Available** — Tally companies you can add |
+| **Sync** | **Now**, **History**, **Vouchers**, **Needs attention**, **Reports** |
+| **Health** | **Checks**, **Activity**, **Logs** |
+| **Help** | Getting started, troubleshooting, shortcuts, contact support, what's new |
+| **Settings** | General, Tally connection, Sync schedule, Notifications, Updates, Advanced, About |
+
+Press **Ctrl + K** anywhere to search or run a command.
 
 ## What it does
 
@@ -65,10 +81,12 @@ This covers most of what goes wrong:
 | Connected, but the wrong data | Is the right company open in Tally? |
 | Stopped after an office move | The computer may have a new network connection |
 
-More detail in [Troubleshooting](/tally-connector/troubleshooting).
+**Health → Checks** tests each of these and says which one is failing. More detail in [Troubleshooting](/tally-connector/troubleshooting).
 
 ## Getting help
 
-Contact whoever provided your Bizmitra connection — usually the software company whose product you are connecting to Tally. They can see whether your Connector is online and what it has been doing.
+**Help → Contact support** inside the app gathers the technical detail for you and shows you what it will share before anything is sent.
+
+Otherwise contact whoever provided your Bizmitra connection — usually the software company whose product you are connecting to Tally. They can see whether your Connector is online and what it has been doing.
 
 For anything else, [contact Bizmitra](https://bizmitra.io/contact).

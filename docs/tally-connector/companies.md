@@ -10,12 +10,14 @@ Worth reading [How it all fits together](/tally-connector/how-it-works) first if
 
 ## Add a company for sync
 
-1. Open **Companies**. It lists Tally companies the Connector can see that are **not yet linked**, with their name, GUID and Company #.
-2. If the one you want is not listed, open it in TallyPrime and choose **Refresh**.
-3. Select it and choose **Add selected for sync**.
+The **Companies** screen has two tabs. **Available** lists Tally companies the Connector can see that are **not yet linked**; **Linked** lists the ones it is already syncing.
+
+1. Open **Companies → Available**. Each row shows the company's name, GUID and Company #.
+2. If the one you want is not listed, open it in TallyPrime and choose **Refresh from Tally**.
+3. Choose **Add** on its row.
 4. A picker opens listing the Bizmitra companies this machine is authorized for. Search for the right one and choose **Link company**.
 
-It now appears under **Synced** as *Active*, and syncing starts.
+It now appears under **Linked**, and syncing starts. That tab shows the Tally company name and the account company it syncs into side by side, so you can confirm the pair at a glance.
 
 ::: warning Link the right pair
 The link decides which books data is written into. Match on the business, not on a similar-looking name — a wrong link sends real vouchers into the wrong company's books. If two names are close, confirm with your provider before linking.
@@ -27,42 +29,42 @@ The common case: yesterday you linked the wrong Tally company, and today you wan
 
 Nothing needs reinstalling. Unlink the first, link the second.
 
-1. Open **Synced** and select the company you linked by mistake.
-2. Choose **Unsync** and confirm. You can note a reason; it is optional.
-3. Open **Companies** and choose **Refresh**. The unlinked company reappears in the list, and so should the one you actually want.
-4. Select the correct company, choose **Add selected for sync**, and link it to the right Bizmitra company.
+1. Open **Companies → Linked** and select the company you linked by mistake.
+2. Choose **Stop syncing…** and confirm. You can note a reason; it is optional.
+3. Switch to the **Available** tab and choose **Refresh from Tally**. The unlinked company reappears there, and so should the one you actually want.
+4. Choose **Add** on the correct company, and link it to the right Bizmitra company.
 
-**Worked example.** Yesterday you added Tally company **60**. Today you want **ABC Infoweb** instead.
+**Worked example.** Yesterday you linked Tally company **87001**. Today you want **Example Exports** instead.
 
 | Step | Where | Action |
 |---|---|---|
-| 1 | **Synced** | Select company 60 → **Unsync** |
-| 2 | TallyPrime | Make sure ABC Infoweb is open |
-| 3 | **Companies** | **Refresh** |
-| 4 | **Companies** | Select ABC Infoweb → **Add selected for sync** |
+| 1 | **Companies → Linked** | Select company 87001 → **Stop syncing…** |
+| 2 | TallyPrime | Make sure Example Exports is open |
+| 3 | **Companies → Available** | **Refresh from Tally** |
+| 4 | **Companies → Available** | Example Exports → **Add** |
 | 5 | Picker | Choose the matching Bizmitra company → **Link company** |
 
-No new download, no new code, no call to your provider — unless ABC Infoweb is missing from one of the two lists, which is covered below.
+No new download, no new code, no call to your provider — unless Example Exports is missing from one of the two lists, which is covered below.
 
-### What Unsync does
+### What "Stop syncing" does
 
 | | |
 |---|---|
 | New sync jobs for that company | Stop being sent to Tally |
 | Jobs already pending for it | Stop being processed |
 | Data already synced | Unaffected — nothing is deleted |
-| Re-linking it later | Allowed, from **Companies**, any time |
+| Re-linking it later | Allowed, from **Companies → Available**, any time |
 
 ## Pause instead of unlinking
 
-If the interruption is temporary — a month-end close, an audit, a data repair in Tally — **Pause** is the better tool.
+If the interruption is temporary — a month-end close, an audit, a data repair in Tally — pausing is the better tool.
 
-On the **Synced** screen, select the company and choose **Pause**; choose **Resume** when you are ready. The link stays intact, so you do not have to find and re-link the right pair afterwards.
+On **Companies → Linked**, select the company and choose **Pause syncing**; choose **Resume syncing** when you are ready. The link stays intact, so you do not have to find and re-link the right pair afterwards.
 
 | Use | When |
 |---|---|
-| **Pause** | Temporary. You intend to resume this same company |
-| **Unsync** | Permanent, or you linked the wrong thing |
+| **Pause syncing** | Temporary. You intend to resume this same company |
+| **Stop syncing** | Permanent, or you linked the wrong thing |
 
 To stop **all** syncing rather than one company, use the sync mode instead — see [Sync settings](/tally-connector/sync-settings).
 
@@ -70,16 +72,16 @@ To stop **all** syncing rather than one company, use the sync mode instead — s
 
 Two lists, two different causes. Find which list is missing it and the fix follows.
 
-### Missing from the Tally list (Companies screen)
+### Missing from the Tally list (Companies → Available)
 
 This list is read live from TallyPrime.
 
 | Cause | Fix |
 |---|---|
-| The company is not open in Tally | Open it, then **Refresh** |
-| TallyPrime is not running | Start it, then **Refresh** |
-| It is already linked | Look under **Synced** — a linked company is deliberately hidden here |
-| Tally is on another machine and unreachable | Check **Tally Settings** and the network |
+| The company is not open in Tally | Open it, then **Refresh from Tally** |
+| TallyPrime is not running | Start it, then **Refresh from Tally** |
+| It is already linked | Look under the **Linked** tab — a linked company is deliberately not repeated here |
+| Tally is on another machine and unreachable | Check **Settings → Tally connection** and the network |
 
 ### Missing from the Bizmitra picker
 
@@ -104,7 +106,9 @@ Supported and normal. Link as many as you need; each syncs independently and can
 Two things to know:
 
 - **All of them share one TallyPrime.** Tally handles one request at a time, so more linked companies means more work queued against the same instance. If Tally starts feeling slow, [Sync settings](/tally-connector/sync-settings) is where you fix it.
-- **They must all be open in Tally.** A company that is closed in Tally cannot be synced, even though it stays listed under **Synced**.
+- **They must all be open in Tally.** A company that is closed in Tally cannot be synced, even though it stays listed under **Linked**.
+
+This page is about several *companies* belonging to one business. If the computer needs to serve **several unrelated businesses** — an accountant's office running books for multiple clients — that is a different arrangement: see [Several customers on one computer](/tally-connector/customer-profiles).
 
 ## For software providers
 

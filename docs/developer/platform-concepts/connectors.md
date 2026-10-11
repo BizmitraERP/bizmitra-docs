@@ -65,6 +65,10 @@ Content-Type: application/json
 
 The update is partial: send only fields that should change. Times use 24-hour `HH:MM`; weekdays are Monday `0` through Sunday `6`; and the timezone must be an IANA name. `sync_mode` accepts `normal` or `business_hours`. Set one field to `null` to remove that remote override and return it to the Connector's local configuration.
 
+::: tip The app labels these differently
+The API values are unchanged, but the Connector's own settings screen calls `business_hours` **Business hours** and `normal` **Around the clock**, and `business_hours` is its default. Use the app's wording when talking a customer through what you changed.
+:::
+
 Read the current remote overrides with:
 
 ```http

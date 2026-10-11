@@ -59,11 +59,24 @@ Two habits worth adopting from the first customer:
 
 **Expose job history to your support team.** `GET /api/v1/connectors/{machine}/jobs` usually contains the answer to "it stopped working" before anyone has to contact the customer.
 
+## What the customer sees
+
+Worth knowing, because your support team will be asked about it and because it changes what a customer can tell you.
+
+- **Health checks.** The app tests each part separately — server connection, network, authentication, Tally, the loaded company, the sync queue, reports, version — and explains whatever is failing. A customer can tell you *which* part is broken without you guessing.
+- **Failures carry a plain-language reason and an error code.** The code is the support reference; it matches the `error_code` you read from the API, so a customer quoting one gives you something you can look up directly.
+- **An auth rejection is distinguished from being offline.** If your application disables a Connector or removes its pairing, the app stops and says the server refused it rather than retrying in a loop. Expect the customer to notice promptly and ask why.
+- **Diagnostic logs are client-controlled.** Support can request a log or temporary detailed logging, and the customer approves or declines it in the app. Nothing is collected from their machine without that approval — which is a reasonable thing to tell a customer's IT department up front.
+- **Several customers can share one machine.** See [One machine, several customers](/developer/tally/pairing#one-machine-several-customers).
+
+The end-user documentation for all of this is in the [Tally Connector](/tally-connector/) section — link customers there rather than restating it.
+
 ## Security posture
 
 - The Connector runs inside the customer's network and reaches out. Bizmitra never initiates a connection into their environment.
 - It performs only work authorized for the paired application, customer, and company.
 - Pairing uses a short-lived code, so your API secret never touches the customer's machine.
+- A Connector binds to one server, and that binding is enforced — a Connector configured for one environment cannot be paired into another by accident.
 - Disabling a Connector stops it taking work without destroying the pairing.
 
 ## Installation and troubleshooting for end users

@@ -115,8 +115,8 @@ Each row carries the master's fields under `payload`:
 
 | Type | Fields |
 |---|---|
-| `group` | `parent`, `is_subledger`, `is_deemed_positive`, `is_revenue` |
-| `ledger` | `parent`, `currency`, `opening_balance`, `gstin`, `gst_registration_type`, `mobile`, `email` |
+| `group` | `parent`, `is_subledger`, `is_deemed_positive`, `is_revenue`, `is_billwise` |
+| `ledger` | `parent`, `currency`, `opening_balance`, `gstin`, `gst_registration_type`, `mobile`, `email`, `is_billwise` |
 | `currency` | `mailing_name`, `original_name`, `expanded_symbol`, `iso_code`, `decimal_places` |
 | `unit` | `is_simple_unit`, `decimal_places`, `base_units`, `additional_units` |
 | `godown` | `parent` |
@@ -128,6 +128,37 @@ Each row carries the master's fields under `payload`:
 ::: warning Values are Tally's, verbatim
 Fields are passed through unmodified — no casing, type coercion, or normalization. Booleans arrive as Tally's `"Yes"` / `"No"` strings, not JSON `true` / `false`, and text like `numbering_method` arrives as Tally spells it. Compare case-insensitively rather than against an exact literal.
 :::
+
+### Whether a ledger keeps bills
+
+`is_billwise` is Tally's *Maintain balances bill-by-bill* setting on that ledger, as `"Yes"` or `"No"`. It matters more than its size suggests, because it decides whether bill references you send are kept at all.
+
+| `is_billwise` | Sending `bill_allocations` to this ledger |
+|---|---|
+| `Yes` | The reference is kept. An invoice opens a bill; a receipt or payment can settle against it |
+| `No` | Tally accepts the voucher and keeps no bill reference. Nothing errors, and nothing can be matched to it later |
+
+So the useful places to read it are both ends of the integration:
+
+- **At setup**, warn when a party ledger you are about to transact against is not configured bill-by-bill. It is a one-line fix in Tally for the customer, and a permanently unmatchable ledger if nobody notices.
+- **Before sending**, send `bill_allocations` only to ledgers that will keep them.
+
+```js
+const { masters } = await api.get('/api/v1/pulled-masters/ledger', {
+  params: { company_id: companyId },
+})
+
+const party = masters.find(m => m.master_name === partyLedger)
+
+// Tally's strings, compared case-insensitively — see the warning above.
+if ((party?.payload?.fields?.is_billwise ?? '').toLowerCase() !== 'yes') {
+  warn(`${partyLedger} does not keep balances bill-by-bill — bill references sent to it are dropped`)
+}
+```
+
+Tally omits the underlying tag entirely on some builds and returns `No` on others; Bizmitra normalizes both to a plain `"No"`, so you never have to read a missing value as "off".
+
+Bill references themselves are covered in [Pulling vouchers](/developer/examples/pull-vouchers#which-bills-a-voucher-opened-or-settled) and [Pushing a receipt](/developer/examples/push-receipt).
 
 ### Verifying customer setup
 

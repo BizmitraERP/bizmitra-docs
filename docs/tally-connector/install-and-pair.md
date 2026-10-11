@@ -49,21 +49,22 @@ Once accepted, the machine is registered and holds its own credentials. **You wi
 
 Pairing establishes *who you are*. Linking establishes *which books to sync*.
 
-1. Open the **Companies** screen. It lists the Tally companies it can see that are not yet linked.
-2. Select one and choose **Add selected for sync**.
+1. Open **Companies → Available**. It lists the Tally companies it can see that are not yet linked.
+2. Choose **Add** on the one you want.
 3. Pick the matching Bizmitra company from the list that appears, and choose **Link company**.
 
-The company then appears under **Synced**, and syncing begins.
+The company then appears under **Companies → Linked**, and syncing begins.
 
 Full detail — including swapping one company for another — is in [Adding and changing companies](/tally-connector/companies).
 
 ## 5. Confirm it is working
 
-| Screen | What good looks like |
+| Where | What good looks like |
 |---|---|
-| **Home** | Paired, Tally online |
-| **Synced** | Your company listed as *Active* |
-| **Jobs** | Entries appearing as work is processed |
+| **Home** | One clear status line, and a next step only if something needs you |
+| **Companies → Linked** | Your company listed, with the account company beside it |
+| **Sync → Now** | Activity as work is processed |
+| **Health → Checks** | Every check healthy; nothing expanded at the top |
 
 Give it a few minutes. The first sync on a large book does the most work it will ever do; after that it only picks up what changed.
 
@@ -73,7 +74,7 @@ Counter-intuitive, but deliberate. If you set the Connector to **Business Hours*
 
 ## Keeping it updated
 
-Leave automatic updates on in **Settings**. Fixes that reduce the load the Connector puts on Tally ship regularly, and an out-of-date Connector is the first thing support will ask about.
+Leave automatic updates on in **Settings → Updates**. Fixes that reduce the load the Connector puts on Tally ship regularly, and an out-of-date Connector is the first thing support will ask about. **Help → What's new** shows what changed in the version you are running.
 
 ## Moving to a different machine
 
