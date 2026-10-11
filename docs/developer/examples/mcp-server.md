@@ -8,6 +8,10 @@ This guide builds a **Model Context Protocol (MCP) server for TallyPrime**, so a
 
 The agent never touches Tally. It calls your MCP server, your MCP server calls the Bizmitra API, and the [Connector App](/developer/tally/connector-app) does the work inside the customer's network.
 
+::: tip Clone and run it
+Everything on this page exists as a working server in the examples repository: **[`mcp-server/`](https://github.com/BizmitraERP/bizmitra-tally-api-examples/tree/master/mcp-server)**. `npm install`, fill in `.env`, then `npm run smoke` to confirm the handshake before you wire it into an agent.
+:::
+
 ## Why an agent cannot talk to Tally directly
 
 Worth being blunt about, because it is the thing most people discover the hard way:
@@ -280,7 +284,7 @@ The server above speaks over **stdio**, which is the right transport when the se
 
 ### Remote — the Claude API MCP connector
 
-To let a hosted agent reach the server, run it over **Streamable HTTP** instead and give it a URL. The transport is the only thing that changes; the tools are identical. The SDK's HTTP transport wiring is covered in the [MCP TypeScript SDK docs](https://ts.sdk.modelcontextprotocol.io/).
+To let a hosted agent reach the server, run it over **Streamable HTTP** instead and give it a URL. The transport is the only thing that changes; the tools are identical. The SDK exports `WebStandardStreamableHTTPServerTransport` and `createMcpHandler` for this — see the [MCP TypeScript SDK docs](https://ts.sdk.modelcontextprotocol.io/) for the wiring.
 
 Claude can then connect to it server-side, with no MCP client of your own:
 
@@ -334,7 +338,7 @@ A customer whose Tally stutters whenever someone uses your AI feature will switc
 
 | Symptom | Likely cause |
 |---|---|
-| Agent sees no tools | Server failed to start. Run `node server.js` directly — a stdio server with a startup exception simply exits silently |
+| Agent sees no tools | Server failed to start. A stdio server with a startup exception simply exits, and "no tools" is the only symptom the agent reports. Run it directly, or use the [smoke test](https://github.com/BizmitraERP/bizmitra-tally-api-examples/tree/master/mcp-server#run-it) from the examples repo, which completes a handshake and prints the tool list |
 | `401` from every call | Whitespace in the key. A trailing newline from a copied secret is the usual culprit |
 | `403` on a company endpoint | The key is valid but that company is not reachable from its application — check the chain in [Authentication](/developer/api/authentication#authorization-is-relational) |
 | Tools work, but every list is empty | The Connector is offline or the company is closed in Tally. This is exactly what `tally_connection_status` is for |
@@ -343,6 +347,7 @@ A customer whose Tally stutters whenever someone uses your AI feature will switc
 
 ## Next
 
+- [`mcp-server/` in the examples repository](https://github.com/BizmitraERP/bizmitra-tally-api-examples/tree/master/mcp-server) — this server, runnable, with a smoke test and the gated write tool
 - [Pull vouchers from Tally](/developer/examples/pull-vouchers) — the read pipeline your `tally_list_vouchers` tool wraps
 - [Create an invoice in Tally](/developer/examples/push-invoice) — the full write-and-verify flow
 - [Masters](/developer/tally/masters) — why name resolution matters, and `is_billwise`
