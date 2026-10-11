@@ -6,7 +6,7 @@
 
 No. Pairing registers the **machine**, not a company. Once a machine is paired you can link, unlink and re-link companies as often as you like.
 
-Open **Synced**, select the wrong company, choose **Unsync**. Then open **Companies**, choose **Refresh**, select the right one and link it.
+Open **Companies → Linked**, select the wrong company, choose **Stop syncing…**. Then switch to the **Available** tab, choose **Refresh from Tally**, and **Add** the right one.
 
 Step by step in [Adding and changing companies](/tally-connector/companies#replace-one-company-with-another).
 
@@ -18,7 +18,7 @@ No. A pairing code is used once, when the machine is first set up. Adding compan
 
 It reaches your machine automatically — companies created under your customer record are granted to your already-paired machines with no re-pairing.
 
-Open **Companies**, choose **Add selected for sync** on the Tally company you want, and the new Bizmitra company will be in the picker. If the Connector has been open for a long time, restart it first.
+Open **Companies → Available**, choose **Add** on the Tally company you want, and the new Bizmitra company will be in the picker. If the Connector has been open for a long time, restart it first.
 
 ### Can one Connector sync several companies?
 
@@ -26,9 +26,13 @@ Yes, and it is the normal arrangement. Each company syncs independently and can 
 
 They all share one TallyPrime, though, so more linked companies means more work queued against the same instance. If Tally starts feeling slow, see [Sync settings](/tally-connector/sync-settings).
 
+### Can one computer serve several unrelated businesses?
+
+Yes. Each business is a separate **customer profile** — its own pairing, its own linked companies, its own history — and you switch between them in **Settings → Advanced**. Only one profile is active at a time. See [Several customers on one computer](/tally-connector/customer-profiles).
+
 ### What is "Company Number"?
 
-Tally's own number for a company in its company list. It is meaningful only inside your Tally installation — it is not a Bizmitra identifier and two unrelated businesses can both have a company Number.
+Tally's own number for a company in its company list. It is meaningful only inside your Tally installation — it is not a Bizmitra identifier and two unrelated businesses can both have the same company number.
 
 The Connector shows it purely so you can tell similarly-named companies apart.
 
@@ -38,14 +42,14 @@ Which list is missing it tells you who fixes it.
 
 | Missing from | Cause | Fix |
 |---|---|---|
-| The Tally list on **Companies** | Not open in Tally | Open it in Tally, then **Refresh** |
+| **Companies → Available** | Not open in Tally | Open it in Tally, then **Refresh from Tally** |
 | The Bizmitra picker | Not created or not attached to your customer | Ask your provider |
 
 Full table in [Adding and changing companies](/tally-connector/companies#when-a-company-does-not-appear).
 
-### What is the difference between Pause and Unsync?
+### What is the difference between pausing and stopping sync?
 
-**Pause** is temporary and keeps the link — use it for a month-end close or an audit, then **Resume**. **Unsync** removes the link entirely; you re-link from **Companies** if you want it back.
+**Pause syncing** is temporary and keeps the link — use it for a month-end close or an audit, then **Resume syncing**. **Stop syncing** removes the link entirely; you re-link from **Companies → Available** if you want it back.
 
 Neither deletes any data.
 
@@ -60,9 +64,9 @@ Tally serves its data gateway on the same thread that draws its window, so while
 If the freezes are long or constant, in order:
 
 1. Update the Connector — fixes that cut how long it holds Tally ship regularly.
-2. Switch to **Business Hours** mode so heavy work defers to off-hours.
+2. Check the sync mode is **Business hours**, so heavy work defers to off-hours.
 3. Narrow the sync window to the current financial year.
-4. Lengthen the background interval to 120 seconds or more.
+4. Lengthen the check interval to 120 seconds or more.
 5. Ask your provider to tune it remotely — smaller export chunks turn one long freeze into several short ones.
 
 Detail in [Troubleshooting](/tally-connector/troubleshooting#tally-hangs-or-feels-slow).
@@ -75,7 +79,7 @@ No. Tally does not stop building an export because you stopped waiting for it, s
 
 Pausing briefly to get through a deadline is reasonable. Leaving it off is not, because backlog is what makes the next run heavy — a week switched off means a week of catch-up.
 
-Use **Business Hours** mode instead. It keeps light sync running all day and moves only the expensive work to off-hours.
+Use **Business hours** mode instead. It keeps light sync running all day and moves only the expensive work to off-hours.
 
 ### Does the Connector slow Tally down because of CPU or memory?
 
@@ -85,15 +89,15 @@ No. Its footprint is negligible. What matters is the share of time it holds Tall
 
 ### How do I set business hours?
 
-**Settings → Synchronization.** Set **Sync mode** to *Business Hours*, then set the window, the days, and a timezone if the machine's clock is not in your business's timezone. Leave *Run full sync & heavy reports during off-hours* ticked.
+**Settings → Sync schedule.** Set **Sync mode** to *Business hours* — it is the default — then set the window, the days, and a time zone if the machine's clock is not in your business's timezone. Leave *Run full sync and heavy reports outside business hours* ticked.
 
 Defaults are 09:00–19:00, Monday to Saturday. Full detail in [Sync settings](/tally-connector/sync-settings#configuring-business-hours).
 
 ### How do I pause syncing during business hours?
 
-You probably want **Business Hours** mode rather than a pause — it keeps invoices and changed vouchers flowing while deferring only the heavy work. A full pause stops everything, including invoices your team is trying to push into Tally.
+You probably want **Business hours** mode rather than a pause — it keeps invoices and changed vouchers flowing while deferring only the heavy work. A full pause stops everything, including invoices your team is trying to push into Tally.
 
-If you do want everything stopped: **Settings → Synchronization → Sync mode → Paused**.
+If you do want everything stopped: **Settings → Sync schedule → Sync mode → Paused**.
 
 ### What happens to work in progress when I pause?
 
@@ -115,7 +119,7 @@ The first bulk pull of a book, full master scans, and report snapshots — stock
 
 ### How far back does it sync?
 
-The current financial year by default, which is the right answer almost always. You can set a date range, a start date, or the entire book in **Settings → Sync window** — but syncing the entire book re-reads closed years on every full pass.
+The current financial year by default, taken from the company's own *Books beginning from* date in Tally — which is the right answer almost always. You can set a specific year, a date range, a start date, or the entire book in **Settings → Sync schedule → Sync window** — but syncing the entire book re-reads closed years on every full pass.
 
 ## Setup and machines
 
@@ -163,7 +167,13 @@ Your provider's integration determines what is synced and retained. Ask them wha
 
 ### What does the Connector send back?
 
-The data the operation calls for, plus operational information: whether Tally is reachable, what jobs ran, and what Tally returned. Diagnostics after a crash are sent only according to the preference in **Settings**, which asks before sending by default.
+The data the operation calls for, plus operational information: whether Tally is reachable, what jobs ran, and what Tally returned.
+
+Its **log** is a separate thing and stays on the computer. If support needs it, they ask — the Connector shows a request card, you preview exactly what would be sent, and you approve or decline it. See [Sharing logs with support](/tally-connector/support-logs).
+
+### Support asked me to turn on detailed logging. What does that do?
+
+It makes the log on your computer record routine steps and the start of Tally's replies, which can include item names, quantities and amounts. It is time-limited, switches itself off when the time is up, and you can switch it off sooner. Approving it sends nothing — the log leaves the computer only if you choose to send it. Detail in [Sharing logs with support](/tally-connector/support-logs).
 
 ### Does it change anything in Tally on its own?
 
@@ -179,8 +189,12 @@ For anything else, [contact Bizmitra](https://bizmitra.io/contact).
 
 ### What should I tell them?
 
-- The Connector version, from **Settings**
-- What **Home** shows: paired, and Tally online
-- The company name and its status on **Synced**
-- The error text from the **Jobs** screen, as it appears
+Easiest is **Help → Contact support**: describe the problem and the Connector attaches its version, the state of each part with Health's checks and error codes, and the last sync result — showing you what is shared before anything is sent.
+
+Writing to them yourself, include:
+
+- The Connector version, from **Settings → About**
+- What **Health → Checks** shows
+- The company name and its status on **Companies → Linked**
+- The failure from **Sync → Needs attention** — the reason and the error code beneath it
 - When it started, and what changed around then

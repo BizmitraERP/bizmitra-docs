@@ -9,8 +9,8 @@ Five minutes here saves a lot of support calls.
 ```mermaid
 flowchart TD
     A["<b>Application</b><br/>the product you signed up with"] --> CU["<b>Customer</b><br/>your business"]
-    CU --> CO1["<b>Bizmitra company</b><br/>Acme Textiles"]
-    CU --> CO2["<b>Bizmitra company</b><br/>ABC Infoweb"]
+    CU --> CO1["<b>Bizmitra company</b><br/>Example Traders"]
+    CU --> CO2["<b>Bizmitra company</b><br/>Example Exports"]
     CU -.->|"pairing code"| M["<b>Connector</b><br/>one Windows machine"]
     CO1 -.->|"linked"| M
     CO2 -.->|"linked"| M
@@ -33,12 +33,12 @@ This is the distinction that matters.
 | Lives in | TallyPrime, on your machine | Bizmitra, in the cloud |
 | Identified by | Company name, GUID, and **Company #** | A name in your provider's system |
 | Created by | Whoever set up your Tally | Your software provider |
-| Shown in the Connector under | **Companies** | The *"Link to … company"* picker |
+| Shown in the Connector under | **Companies → Available** | The *"Link to a company in your account"* picker |
 
 Syncing happens only once you **link** the two — you tell the Connector "this Tally company's books belong in that Bizmitra company."
 
-::: warning "Company 60" is a Tally number
-The **Company #** column in the Connector is Tally's own number for a company in its company list. It is not a Bizmitra identifier, it is not an account number, and it means nothing outside your Tally installation. Two different businesses can both have a company 60.
+::: warning "Company 87001" is a Tally number
+The **Company #** column in the Connector is Tally's own number for a company in its company list. It is not a Bizmitra identifier, it is not an account number, and it means nothing outside your Tally installation. Two different businesses can both have a company 87001.
 :::
 
 ## One install, many companies
@@ -90,10 +90,14 @@ The Connector shows you two separate lists, and they fail for different reasons.
 
 | List | Where it comes from | If a company is missing |
 |---|---|---|
-| Tally companies (**Companies** screen) | Read live from TallyPrime | The company is not open in Tally, or Tally is not running |
+| Tally companies (**Companies → Available**) | Read live from TallyPrime | The company is not open in Tally, or Tally is not running |
 | Bizmitra companies (the link picker) | Your provider's records | Your provider has not created it, or not attached it to your customer |
 
 The first is yours to fix. The second is a one-line request to your provider.
+
+## When one computer serves several businesses
+
+Everything above describes one customer — one business, with as many companies as it has books. A computer can also hold **more than one customer's pairing** and switch between them, which is how an accountant's office runs several unrelated clients from a single install. The arrangement and its limits are in [Several customers on one computer](/tally-connector/customer-profiles).
 
 ## Next
 

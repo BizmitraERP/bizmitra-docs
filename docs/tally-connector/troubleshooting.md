@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Start with the **Home** screen. It tells you whether the Connector is paired and whether Tally is reachable, which separates most problems into the right half straight away.
+Start with **Home**. It shows one status and, when something needs you, the next step to take. If that is not enough, **Health → Checks** tests each part separately and explains whatever is failing at the top of the list.
 
 ## Quick triage
 
@@ -11,7 +11,8 @@ Start with the **Home** screen. It tells you whether the Connector is paired and
 | One company not syncing | That company is paused, or closed in Tally | [One company](#one-company-is-not-syncing) |
 | Data going to the wrong place | Wrong link | [Wrong company](#data-in-the-wrong-company) |
 | Company missing from a list | Depends which list | [Adding and changing companies](/tally-connector/companies#when-a-company-does-not-appear) |
-| Jobs showing as failed | Usually a missing master in Tally | [Failed jobs](#jobs-are-failing) |
+| Vouchers showing as failed | Usually a missing master in Tally | [Failed vouchers](#vouchers-are-failing) |
+| A message you cannot interpret | — | [Health checks](/tally-connector/health) |
 
 ## Tally hangs or feels slow
 
@@ -31,15 +32,15 @@ Tally does not stop building an export because you stopped waiting for it. Killi
 
 **First — is it a genuine problem, or Tally doing its job?** If freezes last a few seconds and then clear, that is normal operation on a busy book. If they last minutes, or happen continuously through the working day, work through the list below.
 
-1. **Update the Connector.** Several fixes that materially reduce how long it holds Tally have shipped. An old build is the single most common reason for this complaint. Check for updates in **Settings**.
+1. **Update the Connector.** Several fixes that materially reduce how long it holds Tally have shipped. An old build is the single most common reason for this complaint. Check for updates in **Settings → Updates**.
 
-2. **Switch to Business Hours mode.** Settings → Synchronization. Set the window to your real working day. Heavy work — the bulk pull, master scans, report snapshots — then defers to off-hours while invoices and changed vouchers keep flowing all day. See [Sync settings](/tally-connector/sync-settings).
+2. **Check the sync mode is Business hours.** Settings → Sync schedule. Set the window to your real working day. Heavy work — the bulk pull, master scans, report snapshots — then defers to off-hours while invoices and changed vouchers keep flowing all day. See [Sync settings](/tally-connector/sync-settings).
 
 3. **Narrow the sync window** to the current financial year. Syncing the entire book re-reads closed years on every full pass.
 
-4. **Lengthen the background interval** to 120 seconds or more.
+4. **Lengthen the check interval** to 120 seconds or more.
 
-5. **Check what is actually linked.** Every linked company shares one TallyPrime. If companies are linked that nobody needs synced, unlink them.
+5. **Check what is actually linked.** Every linked company shares one TallyPrime. If companies are linked that nobody needs synced, unlink them on **Companies → Linked**.
 
 6. **Ask your provider to tune it.** They can adjust how large a share of Tally's time the Connector may take and how large each export chunk is, remotely. Smaller chunks turn one long freeze into several short ones — often the difference between unusable and unnoticeable. Tell them:
    - which Connector version you are on,
@@ -56,48 +57,55 @@ Then it is not the Connector. Confirm by setting the sync mode to **Paused** and
 
 ## Nothing is syncing
 
-Work down this list in order.
+**Health → Checks** answers most of this list in one screen — it reports the server connection, the network, authentication, Tally, the loaded company, the sync queue, reports and the version. Work down the list below for anything it does not settle.
 
 | Check | Where |
 |---|---|
 | Is the machine on and awake? | Windows power settings — sleep stops everything |
 | Is the Connector running? | It should be open, or running in the background |
-| Does **Home** show paired? | Home screen |
-| Does **Home** show Tally online? | Home screen |
+| Do the **Health** checks pass? | Health → Checks |
 | Is TallyPrime running with the company open? | TallyPrime |
-| Is the sync mode **Paused**? | Settings → Synchronization |
-| Is the company itself paused? | **Synced** screen — status should be *Active* |
+| Is the sync mode **Paused**? | Settings → Sync schedule |
+| Is the company itself paused? | **Companies → Linked** |
 | Is the internet working? | Any browser |
 
-If **Home** shows paired and Tally online but the **Jobs** screen is still empty, there may genuinely be nothing to do. Make a change in Tally and watch for it.
+If the checks are healthy but **Sync → Now** stays quiet, there may genuinely be nothing to do. Make a change in Tally and watch for it.
 
 ### After an office move or a new router
 
-The machine may have come back on a different network connection, or with Tally on a new address. Check **Tally Settings** and re-test the connection.
+The machine may have come back on a different network connection, or with Tally on a new address. Check **Settings → Tally connection** and re-test the connection.
 
 ## One company is not syncing
 
 | Check | Fix |
 |---|---|
-| Status on the **Synced** screen | If *Paused*, select it and choose **Resume** |
+| Status on **Companies → Linked** | If paused, select it and choose **Resume syncing** |
 | Is that company open in Tally? | A closed company cannot be synced even while it stays listed |
-| Was it unlinked? | If it is not on **Synced** at all, re-link it from **Companies** |
-| Is the whole Connector paused? | Settings → Synchronization |
+| Was it unlinked? | If it is not on **Linked** at all, re-link it from the **Available** tab |
+| Is the whole Connector paused? | Settings → Sync schedule |
 
 ## Data in the wrong company
 
 Stop syncing first, investigate second.
 
-1. Open **Synced**, select the company, choose **Pause**.
-2. Confirm which Bizmitra company it is linked to.
-3. If the link is wrong, **Unsync** it and re-link correctly from **Companies**.
+1. Open **Companies → Linked**, select the company, choose **Pause syncing**.
+2. Confirm which account company it is linked to — the **Linked** tab shows the Tally name and the account name side by side.
+3. If the link is wrong, choose **Stop syncing…** and re-link correctly from the **Available** tab.
 4. Tell your provider what was written where. Vouchers already sent are in Tally, and correcting them is an accounting task, not a Connector one.
 
 Prevention: check the pair carefully at link time. See [Adding and changing companies](/tally-connector/companies).
 
-## Jobs are failing
+## Vouchers are failing
 
-The **Jobs** screen lists what was attempted and what came back from Tally.
+The **Sync** screen holds this, split by what you are looking for:
+
+| Tab | What it shows |
+|---|---|
+| **Now** | What is running at this moment, and what just ran |
+| **History** | Completed cycles — time, status, scope, direction, records, duration |
+| **Vouchers** | Individual vouchers pulled and pushed, with their status |
+| **Needs attention** | Pushes that failed and failed cycles from today — the list to work from |
+| **Reports** | Each report and whether it last ran |
 
 | Pattern | Usual cause |
 |---|---|
@@ -107,7 +115,11 @@ The **Jobs** screen lists what was attempted and what came back from Tally.
 
 Most failures are a missing master. Tally will not accept a voucher naming a ledger that does not exist, and the name must match exactly — trailing spaces and differing capitalisation both count.
 
-Failed jobs can be retried from the **Jobs** screen once the underlying cause is fixed.
+Failed pushes are retried from **Needs attention** once the underlying cause is fixed: select the rows and choose **Retry selected**, or use **Retry** on a single row.
+
+### Reading an error
+
+Each failure shows **What went wrong** in plain language, with an **Error code** beneath it. The code is a support reference, not the explanation — quote it when you report the problem, but work from the sentence above it. Older versions showed only the bare code.
 
 ## The Connector shows as offline to my provider
 
@@ -124,15 +136,17 @@ Office machines get switched off. It is not usually an incident.
 
 ## Collecting information for support
 
-Have these ready:
+**Help → Contact support** assembles most of this for you. Describe the problem and the Connector attaches its version, the state of each part with Health's checks and error codes, and the last sync result. It lists exactly what will be shared and what never is, and nothing leaves the computer until you press send.
 
-- The Connector version, from **Settings**.
-- What **Home** shows: paired, and Tally online.
-- The company name, and its status on **Synced**.
-- What the **Jobs** screen shows — the error text as it appears.
+If you are writing to support yourself instead, have these ready:
+
+- The Connector version, from **Settings → About**.
+- What **Health → Checks** shows, and anything expanded at the top of it.
+- The company name, and its status on **Companies → Linked**.
+- The failure from **Sync → Needs attention** — the plain-language reason and the error code beneath it.
 - When it started, and what changed around then (a Tally upgrade, an office move, a new machine).
 
-The Connector can send diagnostics when something goes wrong; the preference for that lives in **Settings**, and asking before sending is the default.
+Support may also ask for the Connector's log, or ask you to switch on detailed logging for a few hours. Both arrive as a card you approve or decline, and both are covered in [Sharing logs with support](/tally-connector/support-logs).
 
 ## Still stuck
 

@@ -7,7 +7,7 @@ Pairing links a customer's Connector installation to the Bizmitra companies you 
 The model is easy to get wrong, so state it plainly:
 
 - A pairing code is **scoped to a customer**, and authorizes **all** of that customer's companies in your application at once.
-- The customer redeems it **once per machine**. The machine then holds its own credentials.
+- The customer redeems it **once per machine, per customer**. The machine then holds its own credentials.
 - Companies you create for that customer **later** reach the paired machine automatically. No second code.
 
 A code is therefore an onboarding step, not a per-company operation. If your integration mints one every time a customer adds a company, it is doing unnecessary work and giving the customer a step they do not need.
@@ -16,7 +16,7 @@ A code is therefore an onboarding step, not a per-company operation. If your int
 
 The alternative — handing the customer an API credential — would mean your production secret living on a machine you do not control, typed into a form, and probably emailed at some point. A pairing code is single-purpose, short-lived, and revocable, and it grants nothing beyond establishing one pairing.
 
-It is also the tenant-isolation boundary. The redeemed machine is locked to exactly the company set the code carried, so a Connector can never enumerate another customer's books.
+It is also the tenant-isolation boundary. A redeemed pairing is locked to exactly the company set the code carried, so a Connector can never enumerate another customer's books. One machine can hold several pairings and switch between them — see [One machine, several customers](#one-machine-several-customers) — and the boundary holds per pairing, not per machine.
 
 ## The flow
 
@@ -130,6 +130,27 @@ POST /api/v1/connectors/pairing-codes/{id}/revoke    # revoke
 ```
 
 Revoke codes that were issued and never used. An unredeemed code sitting in an old email thread is a loose end, and cleaning them up is cheap.
+
+## One machine, several customers
+
+The rule above — a redeemed machine is locked to the company set its code carried — is per **pairing**, not per machine. A single Connector install can hold more than one customer's pairing and switch between them, which is how an accountant's office runs several unrelated clients from one computer.
+
+Each pairing is a **customer profile**: its own authorized companies, its own Tally links, its own history. The server owns the list, so it survives a reinstall and is visible to you.
+
+| | |
+|---|---|
+| Profiles active at once | **One.** The profile the customer switched to is the one that syncs; the others are parked |
+| Isolation between profiles | Unchanged — enforced server-side per pairing, so no profile can enumerate another's books |
+| What you issue | One pairing code per customer, exactly as for a first install |
+| Who switches | The customer, in the Connector's settings. There is no API call to switch for them |
+
+Nothing is required of your integration to support this. The implication worth designing for is the first row: a machine serving three customers is syncing one of them at a time, so health and freshness for the other two reflect a parked profile rather than a fault.
+
+::: tip Tell customers to name their profiles
+An unnamed profile is one somebody switches into by mistake. The Connector lets them rename each one, and it is worth saying so during onboarding.
+:::
+
+The customer-facing side of this is [Several customers on one computer](/tally-connector/customer-profiles).
 
 ## Re-pairing
 
