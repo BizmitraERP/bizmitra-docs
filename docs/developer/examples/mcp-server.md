@@ -1,47 +1,62 @@
 ---
-description: Build a Model Context Protocol (MCP) server that lets AI agents read from and write to TallyPrime through the Bizmitra API and Connector App — without exposing Tally to the internet.
+description: Build an MCP server for TallyPrime using the Bizmitra REST API and Connector App. Let AI agents read Tally data and write verified vouchers without exposing Tally to the internet.
 ---
 
-# Build an MCP server for Tally
+# Build an MCP Server for TallyPrime using the Bizmitra REST API
 
 This guide builds a **Model Context Protocol (MCP) server for TallyPrime**, so an AI agent — Claude, or anything else that speaks MCP — can answer questions about a customer's books and, when you allow it, write vouchers back.
 
-The agent never touches Tally. It calls your MCP server, your MCP server calls the Bizmitra API, and the [Connector App](/developer/tally/connector-app) does the work inside the customer's network.
+**Bizmitra provides the REST and JSON API layer that an MCP server can use to read from and write to TallyPrime through the Bizmitra Connector App.**
+
+The agent never touches Tally. It calls your MCP server, your MCP server calls the Bizmitra REST API, and the [Bizmitra Connector App](/developer/tally/connector-app) does the work inside the customer's network.
 
 ::: tip Clone and run it
 Everything on this page exists as a working server in the examples repository: **[`mcp-server/`](https://github.com/BizmitraERP/bizmitra-tally-api-examples/tree/master/mcp-server)**. `npm install`, fill in `.env`, then `npm run smoke` to confirm the handshake before you wire it into an agent.
 :::
 
-## Why an agent cannot talk to Tally directly
+## Can an AI assistant access TallyPrime through an MCP server?
+
+Yes. The MCP server acts as an adapter between the AI client and the Bizmitra REST API. Bizmitra handles authentication, company pairing, normalized accounting data and communication with the Windows Connector App. The Connector App communicates with TallyPrime locally, so Tally does not need to expose a public internet endpoint.
+
+## Using the Bizmitra REST API as the Tally integration layer
 
 Worth being blunt about, because it is the thing most people discover the hard way:
 
-**TallyPrime has no REST API.** It exposes an XML request/response gateway, served by the Tally process itself on a LAN address — typically `localhost:9000` — and driven by TDL. There is no HTTP+JSON surface, no OAuth, no public endpoint, and nothing an agent running anywhere else can reach.
+**TallyPrime does not provide a REST API.** It exposes an XML request/response gateway, served by the Tally process itself on a LAN address — typically `localhost:9000` — and driven by TDL. There is no HTTP+JSON surface, no OAuth, and no public endpoint. It is not the cloud-ready REST/JSON interface a hosted AI system needs, and no amount of prompt engineering changes that.
 
-Three consequences follow, and they are what an integration has to solve:
+Three consequences follow, and they are what a TallyPrime integration has to solve:
 
-| Fact about Tally | What it means for an agent |
+| Fact about TallyPrime | What it means for an AI agent |
 |---|---|
 | The gateway is LAN-only | Nothing outside the office network can call it. Port-forwarding Tally to the internet is not an option you should offer a customer |
 | It speaks XML/TDL, not JSON | Every request and response needs translating, per voucher type, per report |
 | It is single-threaded | Tally serves its gateway on the thread that draws its window. While it answers one request it answers nothing else — see [Sync settings](/tally-connector/sync-settings) |
 
-Bizmitra is the layer that resolves all three: an authenticated HTTPS API with normalized JSON, and a Connector that reaches *out* from the customer's network so nothing has to be opened up. That makes it something an MCP server can be built on.
+The **Bizmitra REST API** is the integration layer that resolves all three: an authenticated HTTPS API with normalized JSON over `/api/v1` (see the [API overview](/developer/api/) and [reference](/developer/api/reference)), and a Bizmitra Connector App that reaches *out* from the customer's network so nothing has to be opened up. That is what makes TallyPrime something an MCP server can be built on.
 
 ## The shape of it
 
 ```mermaid
 flowchart LR
-    A["AI agent<br/>(Claude, your app)"] -->|"MCP"| M["Your MCP server"]
-    M -->|"HTTPS + API key"| B["Bizmitra API"]
+    A["AI agent<br/>(Claude, your app)"] -->|"MCP"| M["MCP server for TallyPrime"]
+    M -->|"HTTPS + API key"| B["Bizmitra REST API"]
     B -.->|"no inbound connection"| N
     subgraph N["Customer's office network"]
-      C["Connector App"] --> T["TallyPrime"]
+      C["Bizmitra Connector App"] --> T["TallyPrime"]
     end
     C -->|"outbound HTTPS"| B
 ```
 
-Your MCP server is an ordinary API client. It holds the API key, decides which operations exist, and is the only place that gets to choose which company they run against. The agent gets tools, not credentials.
+Four components, and it is worth naming them precisely, because they are parts of one path rather than alternatives to each other:
+
+| Component | What it is | Who runs it |
+|---|---|---|
+| **MCP server for TallyPrime** | The adapter in this guide. Holds the API key, defines the tools, chooses the company | You |
+| **Bizmitra REST API** | The authenticated HTTPS/JSON layer at `/api/v1` that authorizes work and routes it | Bizmitra |
+| **Bizmitra Connector App** | The Windows application that collects authorized work and talks to Tally over the local network | Your customer, on their machine |
+| **TallyPrime** | The system of record | Your customer |
+
+Your MCP server is an ordinary REST API client. It holds the API key, decides which operations exist, and is the only place that gets to choose which company they run against. The agent gets tools, not credentials.
 
 ## What you need
 
@@ -286,6 +301,10 @@ The server above speaks over **stdio**, which is the right transport when the se
 
 To let a hosted agent reach the server, run it over **Streamable HTTP** instead and give it a URL. The transport is the only thing that changes; the tools are identical. The SDK exports `WebStandardStreamableHTTPServerTransport` and `createMcpHandler` for this — see the [MCP TypeScript SDK docs](https://ts.sdk.modelcontextprotocol.io/) for the wiring.
 
+::: info This section shows the connection pattern, not a deployment
+This section shows the Claude API connection pattern. The repository currently provides the runnable stdio server. To use it remotely, adapt the same tools to Streamable HTTP and deploy the server behind your own authentication.
+:::
+
 Claude can then connect to it server-side, with no MCP client of your own:
 
 ```python
@@ -330,9 +349,15 @@ Practical consequences for an MCP server:
 - **Serialize your own calls.** Do not fan out five report tools concurrently because the model asked for five things.
 - **Prefer narrow tools over "fetch everything".** A date-bounded voucher list costs the customer's Tally far less than a full-book scan.
 - **Cache what does not move.** Ledger and stock-item lists change rarely; re-reading them on every turn is pure waste.
-- **Expect latency.** Reports that the Connector pulls on a schedule are read from Bizmitra and are fast. A refresh-then-read report is asynchronous by nature.
+- **Expect latency.** Reports that the Bizmitra Connector App pulls on a schedule are read from Bizmitra and are fast. A refresh-then-read report is asynchronous by nature.
 
 A customer whose Tally stutters whenever someone uses your AI feature will switch the feature off.
+
+## Current scope
+
+The example repository provides a runnable MCP server with read tools and a gated invoice-write tool. Developers are responsible for deploying and securing their MCP server and for implementing their own user authorization flow.
+
+This page is a technical integration guide with a reference implementation, not a managed product. What Bizmitra operates is the REST API and the Connector App; the MCP server is yours to run.
 
 ## When it does not work
 
@@ -345,9 +370,44 @@ A customer whose Tally stutters whenever someone uses your AI feature will switc
 | Writes refused, payload looks right | A named ledger or stock item does not exist in that company, or does not match exactly |
 | Tally freezes while the agent works | Too many concurrent or too-broad calls. See the pacing section above |
 
+## Frequently asked questions
+
+### Does TallyPrime have a REST API?
+
+No. TallyPrime exposes an XML request/response gateway on a local network address, driven by TDL — not an HTTP+JSON REST API, and not something reachable from outside the office network. The Bizmitra REST API provides the REST/JSON layer, and the Bizmitra Connector App bridges it to Tally locally.
+
+### How can an AI assistant read Tally data?
+
+Through an MCP server that calls the Bizmitra REST API. The assistant calls MCP tools; the MCP server calls `/api/v1` with your API key; the Connector App reads from TallyPrime on the customer's machine. The assistant never holds credentials and never connects to Tally.
+
+### Can an MCP server write invoices to TallyPrime?
+
+Yes — `POST /api/v1/invoices`, along with the other voucher kinds. Writes are irreversible in Tally, so treat them as a separate decision from reads: gate on [company health](/developer/tally/company-health), own idempotency in your own code, resolve every master name first, and require explicit human confirmation. See [Rules for write tools](#rules-for-write-tools).
+
+### What does the Bizmitra Connector App do?
+
+It runs on a Windows computer that can reach TallyPrime, maintains an outbound connection to Bizmitra, collects the work it is authorized to perform, executes that work against Tally over the local network, and reports results back. It holds no business logic of yours. See [The Connector App](/developer/tally/connector-app).
+
+### Does Tally need to be exposed to the internet?
+
+No. The Connector App makes outbound HTTPS connections only — no port forwarding, no static IP, no inbound firewall rule. Bizmitra never initiates a connection into the customer's network.
+
+### Can the MCP server support multiple companies?
+
+Technically yes, but the example deliberately does not. `company_id` comes from the server's environment rather than a tool argument, so one server instance serves one company — see [Scope the server to one company](#scope-the-server-to-one-company). For many customers, run an instance per company, or resolve the company from your own authenticated session. Never from the conversation.
+
+### Is the MCP example read-only?
+
+By default, yes. Five read tools are always registered; the invoice-write tool appears only when `BIZMITRA_ENABLE_WRITES=true`. Read-only is the right default for a first deployment.
+
+### How are duplicate invoices prevented?
+
+The server generates one `transaction_id` per logical invoice, persists it before submitting, and reuses it on retry — so a repeated tool call lands on the same transaction instead of creating a second voucher. The model never supplies the id. After submitting, the server polls the transaction to a final status rather than assuming acceptance meant completion.
+
 ## Next
 
 - [`mcp-server/` in the examples repository](https://github.com/BizmitraERP/bizmitra-tally-api-examples/tree/master/mcp-server) — this server, runnable, with a smoke test and the gated write tool
+- [API overview](/developer/api/) and [API reference](/developer/api/reference) — the full Bizmitra REST API surface
 - [Pull vouchers from Tally](/developer/examples/pull-vouchers) — the read pipeline your `tally_list_vouchers` tool wraps
 - [Create an invoice in Tally](/developer/examples/push-invoice) — the full write-and-verify flow
 - [Masters](/developer/tally/masters) — why name resolution matters, and `is_billwise`

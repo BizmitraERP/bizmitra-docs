@@ -142,7 +142,7 @@ export default withMermaid(defineConfig({
             { text: 'Pull vouchers from Tally', link: '/developer/examples/pull-vouchers' },
             { text: 'Create an invoice in Tally', link: '/developer/examples/push-invoice' },
             { text: 'Settle invoices with a receipt', link: '/developer/examples/push-receipt' },
-            { text: 'Build an MCP server for Tally', link: '/developer/examples/mcp-server' },
+            { text: 'Build an MCP server for TallyPrime', link: '/developer/examples/mcp-server' },
             { text: 'Postman collection', link: '/developer/examples/postman' },
           ],
         },

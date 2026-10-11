@@ -1,6 +1,6 @@
 # API
 
-The Bizmitra API is HTTPS and JSON, versioned under `/api/v1`.
+The Bizmitra REST API is HTTPS and JSON, versioned under `/api/v1`. It is the integration layer for TallyPrime: Tally itself exposes only a LAN-bound XML/TDL gateway, so this is the REST/JSON surface your application — or an [MCP server for TallyPrime](/developer/examples/mcp-server) — actually calls.
 
 ```
 https://bizmitra.io/api/v1
