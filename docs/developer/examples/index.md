@@ -16,7 +16,7 @@ Plus the [Postman collection](/developer/examples/postman), which is the most co
 
 ## For AI agents
 
-[Build an MCP server for Tally](/developer/examples/mcp-server) wraps the same two directions in a Model Context Protocol server, so an AI agent can read a customer's books — and, where you allow it, write to them. It covers tool-surface design, keeping the company id out of the model's reach, and the rules a write tool has to follow.
+[Build an MCP server for TallyPrime using the Bizmitra REST API](/developer/examples/mcp-server) wraps the same two directions in a Model Context Protocol server, so an AI agent can read a customer's books — and, where you allow it, write to them. It covers tool-surface design, keeping the company id out of the model's reach, and the rules a write tool has to follow. The runnable server lives in [`mcp-server/`](https://github.com/BizmitraERP/bizmitra-tally-api-examples/tree/master/mcp-server).
 
 ## Before you run them
 
