@@ -14,6 +14,10 @@ Nearly every integration is one of these, or both.
 
 Plus the [Postman collection](/developer/examples/postman), which is the most complete executable reference to the API today.
 
+## For AI agents
+
+[Build an MCP server for Tally](/developer/examples/mcp-server) wraps the same two directions in a Model Context Protocol server, so an AI agent can read a customer's books — and, where you allow it, write to them. It covers tool-surface design, keeping the company id out of the model's reach, and the rules a write tool has to follow.
+
 ## Before you run them
 
 - A paired company, verified with [company health](/developer/tally/company-health).
