@@ -23,6 +23,7 @@ The same reasoning applies in reverse. Reading data out of accounting software a
 - **Reporting surfaces** — read stock summaries, stock movement, funds flow, profit and loss, and TDS data without building Tally report parsing yourself.
 - **Embedded provisioning** — create customers, companies, and pairing codes through the API so your users never see a Bizmitra screen.
 - **Event-driven workflows** — subscribe to webhooks instead of polling.
+- **AI agents over a customer's books** — expose the same operations to an agent as MCP tools. See [Build an MCP server for Tally](/developer/examples/mcp-server).
 
 ## How the pieces fit
 
