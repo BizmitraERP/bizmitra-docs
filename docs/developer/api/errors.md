@@ -39,9 +39,30 @@ Worth separating, because the fixes are unrelated.
 
 **`401`** — the credential itself. Check the header format is `Bearer {key_id}:{secret}`, with no trailing whitespace, and that the key has not been revoked.
 
-**`403`** — the credential is fine, the *relationship* is not. Authorization requires `key → application → customer → company`. A `403` almost always means the company is not attached to a customer under your application, or you sent a `company_id` belonging to a different application.
+**`403`** — the credential is fine, something about the *relationship* or the
+*permission* is not. The body's `error` says which, and they are fixed in
+different places:
+
+| `error` | Meaning | Where the fix is |
+|---|---|---|
+| `capability_not_allowed` | Your **application** is not allowed to use this endpoint | Tick the product the message names under the application's **Assigned products** |
+| `sync_capability_not_assigned` | Your application has it; this **customer** was not given it | The customer's sync scope, under the application's **Customers & Companies** |
+| others | The company is not attached to a customer under your application, or the `company_id` belongs to a different application | Provisioning |
 
 Sending a Tally company GUID where `company_id` is expected also lands here.
+
+::: warning A 403 is about provisioning, never about load or luck
+A key that works does not start failing on its own. Every `403` above is a
+deliberate, persistent "this is not enabled" — so the same request will be
+refused identically until something is changed in the portal, and retrying
+cannot help. If a request that used to work now returns `403`, look for a
+product that was unticked or a customer whose scope changed, not for a transient
+fault.
+
+Capability denials are also the reason a `403` can appear *after* a working
+integration test: the products a new application starts with are not the ones a
+live application ends up with.
+:::
 
 ## Failed transactions
 

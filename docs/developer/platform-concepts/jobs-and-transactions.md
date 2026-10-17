@@ -45,6 +45,34 @@ Never tell your user an invoice was created on the strength of the first respons
 
 Persist `transaction_id` against your own record before doing anything else. If your process dies here and you did not store it, you have submitted a write you can no longer track — and retrying blindly is how duplicates happen.
 
+### What "accepted" guarantees
+
+A `202` means the job is a **committed row**, before the response is written.
+From that point it is ours to deliver: it survives a restart or deploy of the
+API, the Connector being offline, Tally being closed, and the customer's PC
+being switched off for a week. It is not held in memory and nothing discards it
+for age — see [How long a queued job waits](#how-long-a-queued-job-waits).
+
+What a `202` does **not** promise is that Tally accepted the voucher. Delivery is
+guaranteed; the outcome is reported. A job can still end `failed` or
+`dead_letter` — a missing master, a duplicate voucher number, a Tally dialog
+nobody dismissed — and the only way to learn which is to follow the
+`transaction_id`.
+
+So there are exactly two states you must handle, and the difference between them
+is whether you got a `202`:
+
+| You received | Then | Do |
+|---|---|---|
+| A `202` | The job exists and will be attempted | Poll `transaction_id` for the outcome |
+| No response, or a `5xx` | The job **may or may not** exist | Read `outcome` on the error: `not_sent` means it does not; `result_unknown` means look it up before re-sending. Or re-send with the same idempotency key, which is safe either way |
+
+::: info This is about the push queue, not the reports
+The same guarantee covers master pushes. It does not apply to the read side:
+pulled vouchers and pulled masters are a refreshed cache, and a report that
+could not run is reported as not having run rather than queued.
+:::
+
 ## Checking status
 
 ```http
@@ -74,6 +102,35 @@ A completed write (the transaction record is nested under `transaction`):
 This envelope is the intended contract and is being finalized against production. A successful result will always expose `transaction_id` and the Tally voucher GUID. Field names elsewhere in the envelope may still change before the first stable release.
 :::
 
+## How long a queued job waits
+
+An accepted push is a durable row, not an in-memory handoff. Nothing discards it
+because time passed.
+
+| Status | What it means | Does it expire? |
+|---|---|---|
+| `pending` | Queued, waiting for a Connector to pick it up | **No.** It waits indefinitely — Tally closed for the weekend, the PC switched off, the Connector uninstalled and reinstalled. It runs when a Connector next collects work for that company |
+| `reserved` | A Connector has it and is working on it | The *reservation* lapses if that Connector goes quiet, and the job returns to `pending` for redelivery. The job itself is not discarded |
+| `completed` / `failed` | Terminal | — |
+| `dead_letter` | Terminal. Delivered too many times without a result | — |
+
+So the answer to "does a job ever expire while Tally is closed?" is no. A job can
+still die, but only from being *attempted* too often, never from waiting: each
+delivery that ends without a result — including a reservation that lapses because
+the Connector went offline mid-push — counts as an attempt, and after five the
+job is dead-lettered rather than redelivered forever.
+
+That bound exists because the alternative is worse. A job that is redelivered
+indefinitely starts a fresh Tally read or write every time, and a `dead_letter`
+row is something an operator can see and act on.
+
+::: tip Queue depth is worth watching
+A customer whose Tally stays closed accumulates `pending` jobs that will all run
+at once when it opens. If your product queues continuously, check queue depth
+and the company's health rather than pushing blindly into a machine that has
+been offline for a week.
+:::
+
 ## Identifiers, and which one to keep
 
 | Identifier | Issued by | Use it for |
@@ -83,7 +140,7 @@ This envelope is the intended contract and is being finalized against production
 | `tally_master_id` | Tally | The Tally master ID |
 | `tally_alter_id` | Tally | Detecting that a voucher changed in Tally |
 
-Store `transaction_id` and `tally_voucher_guid` on your own record. Without the GUID, a later update has no way to target the existing voucher and will create a second one.
+Store `transaction_id` and `tally_voucher_guid` on your own record. The GUID is how you recognise the voucher again in the pulled feed, and how a future update will target it — note that pushing an edit is [not supported yet](/developer/tally/voucher-kinds#updating-and-deleting-vouchers), so re-sending a corrected voucher today creates a second one.
 
 `tally_alter_id` increments when a voucher is edited in Tally. If you are syncing bidirectionally, it is how you notice someone changed the books underneath you.
 
@@ -99,10 +156,11 @@ Retries are normal. Networks time out, processes restart, queues redeliver. Assu
 
 **Writing to Tally**
 
-- Keep an idempotency key of your own on your record.
-- Before submitting, check whether that record already has a `transaction_id`. If it does, poll that transaction instead of submitting again.
-- On an ambiguous failure — timeout, connection reset — poll before retrying. The job may well have succeeded.
-- For updates, always target the stored `tally_voucher_guid`.
+- Send an idempotency key with every push. Bizmitra de-duplicates on it, so the same key returns the original job instead of queueing a second voucher — see [Idempotency in Conventions](/developer/api/conventions#idempotency) for where to put it and how to confirm it was read.
+- Keep that key on your own record too, so a retry after a crash reuses it rather than minting a new one.
+- Before submitting, check whether the record already has a `transaction_id`. If it does, poll that transaction instead of submitting again.
+- On an ambiguous failure — timeout, connection reset — poll before retrying, unless you sent a key, in which case re-sending the identical request is safe.
+- Corrections cannot be pushed as edits yet — see [Updating and deleting vouchers](/developer/tally/voucher-kinds#updating-and-deleting-vouchers). Keep the `tally_voucher_guid` regardless.
 
 **Reading from Tally**
 

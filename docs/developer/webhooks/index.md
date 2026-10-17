@@ -60,3 +60,29 @@ Everything else is detail. These three are not optional.
 Keep a reconciliation path. Deliveries can fail, your receiver can be down for an hour, an event can be lost at either end.
 
 Webhooks do not report transaction outcomes or voucher arrivals. Poll the transaction API until each push reaches a terminal state, and keep polling and acknowledging the pulled-voucher API for Tally-originated vouchers.
+
+## Transaction webhooks
+
+Transaction webhooks are on the roadmap and have **no committed date**. Build
+the polling path; do not hold work back waiting for them.
+
+This is deliberate rather than an omission we keep forgetting. A transaction
+webhook is only useful if it is at least as reliable as polling, and the far end
+of a transaction is one desktop PC that can go offline mid-job — so the event
+has to be emitted from the durable job row, after the outcome is final, with its
+own retry and reconciliation path. That is the work, and announcing a date before
+it is built would cost you a migration rather than save you one.
+
+Polling is not a stopgap you will have to unpick either: when transaction
+webhooks do arrive they will carry the same `transaction_id` and the same
+terminal statuses you are already handling, so they become a latency improvement
+on code you already have. The guidance in
+[Idempotency](/developer/platform-concepts/jobs-and-transactions#idempotency)
+remains correct in both worlds.
+
+The same applies to **master deletion sync** — being told that a ledger or stock
+item was deleted in Tally. Today a deletion is only visible as the master
+disappearing from a full re-read of
+[pulled masters](/developer/tally/masters#how-fresh-pulled-masters-are), because
+Tally leaves no record of the deletion to read; detecting it means comparing a
+complete snapshot against the last one. No committed date for that either.
