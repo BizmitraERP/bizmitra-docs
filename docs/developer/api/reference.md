@@ -52,6 +52,15 @@ Walkthrough: [Pull vouchers from Tally](/developer/examples/pull-vouchers).
 
 ## Reports
 
+Reports come in two kinds, and which kind decides whether your figures are current:
+
+- **Kept current by the Connector.** The Connector re-reads these from Tally on its own schedule. Just `GET` them.
+- **Pulled on request.** Nothing refreshes these on its own. `POST …/refresh` asks the Connector to read the report from Tally, and `GET` reads what it stored. If you never refresh, every read returns the last pull, however old.
+
+Every report needs the company: send `X-Bizmitra-Company`, or `company_reference` (your `cmp_…` reference) as a query parameter on a read or in the body of a refresh.
+
+### Kept current by the Connector
+
 | Method | Endpoint | Returns |
 |---|---|---|
 | `GET` | `/api/v1/stock-summary?company_id={id}` | Stock summary, all items |
@@ -59,14 +68,51 @@ Walkthrough: [Pull vouchers from Tally](/developer/examples/pull-vouchers).
 | `GET` | `/api/v1/stock-tree` | Stock group tree |
 | `GET` | `/api/v1/stock/vouchers?company_id={id}&item_name={name}` | Vouchers affecting one item |
 | `GET` | `/api/v1/funds-flow` | Funds flow, 12 months |
-| `POST` | `/api/v1/profit-loss/refresh` | Refresh Profit & Loss |
-| `GET` | `/api/v1/profit-loss` | Read Profit & Loss |
+| `GET` | `/api/v1/cash-flow` | Cash flow, 12 months |
+| `GET` | `/api/v1/cash-bank-book` | Closing balance of every cash and bank ledger, with its group |
+| `GET` | `/api/v1/bank-recon` | Uncleared bank entries. `bank_ledger` narrows to one bank |
+| `GET` | `/api/v1/gst` | GSTR-1 and GSTR-3B return view. Filters: `statement_type`, `period_key`, `section_key` |
+| `GET` | `/api/v1/gst/stats` | Which GST periods are held, and when they last refreshed |
 | `GET` | `/api/v1/tds-summary` | TDS summary per party |
-| `POST` | `/api/v1/tds/bills/refresh` | Refresh TDS bills for one party |
-| `GET` | `/api/v1/tds/bills?party={name}` | TDS bills for one party |
+| `GET` | `/api/v1/bills-receivable` | Pending bills the company is owed. `party` narrows to one party |
+| `GET` | `/api/v1/bills-payable` | Pending bills the company owes. `party` narrows to one party |
 
-::: tip Refresh-then-read
-Profit & Loss and TDS bills follow a two-step pattern: `POST …/refresh` asks the Connector to recompute from Tally, then `GET` reads the result. The refresh is asynchronous, so allow it to complete before reading, or you will read the previous figures.
+Each read carries a `freshness` block: `data_status` and `data_as_of` say how current the stored snapshot is.
+
+### Pulled on request
+
+| Report | Refresh (queue a pull) | Read the result |
+|---|---|---|
+| Balance Sheet | `POST /api/v1/balance-sheet/refresh` | `GET /api/v1/balance-sheet` |
+| Trial Balance | `POST /api/v1/trial-balance/refresh` | `GET /api/v1/trial-balance` |
+| Profit & Loss statement | `POST /api/v1/profit-loss-statement/refresh` | `GET /api/v1/profit-loss-statement` |
+| Profit & Loss (full period) | `POST /api/v1/profit-loss/refresh` | `GET /api/v1/profit-loss` |
+| Ledger (one ledger) | `POST /api/v1/ledger/refresh` | `GET /api/v1/ledger?ledger_name={name}` |
+| TDS bills (one party) | `POST /api/v1/tds/bills/refresh` | `GET /api/v1/tds/bills?party={name}` |
+
+A pull takes three steps:
+
+1. **Refresh.** `POST …/refresh` answers `202` straight away with a `job_id`. Nothing has been read from Tally yet.
+2. **Wait for the job.** The Connector picks it up on its next poll (every 30 seconds by default) and reads the report from Tally, which can take a few minutes on a large company. Follow it with `GET /api/v1/transactions/{job_id}` until `status` is `completed`, or `failed` / `dead_letter`. The Connector has to be online, with TallyPrime running and the company open.
+3. **Read.** `GET` the read endpoint. A read made before the job completes returns the previous pull. On the statements and the Ledger, `fetch.updated_at` is when the pull you are reading was stored.
+
+What each refresh takes in its body:
+
+| Refresh | Body |
+|---|---|
+| Balance Sheet, Trial Balance, Profit & Loss statement | `from_date`, `to_date` (Tally `yyyymmdd`), `month_wise` (one export per calendar month; needs both dates), `detailed` (each group's ledgers as well as the group totals), `transaction_id` (optional; reuse it to avoid queueing the same pull twice) |
+| Profit & Loss (full period) | `transaction_id` only. The report ignores dates and always covers the full company period |
+| Ledger | `ledger_name`, `from_date` and `to_date` (all required), `transaction_id` |
+| TDS bills | `tds_ledger` and `party` (required), `from_date` / `to_date` (optional), `transaction_id` |
+
+The Balance Sheet and Trial Balance are as at `to_date`: send today's date for current figures. Their figures are cumulative from the start of the financial year, so a month-wise pull also carries `*_movement` on each row, which is that month's own change. Before charting any month-wise statement, check `fetch.window_ignored`. When it is `true`, Tally returned the same figures for every month, so the monthly split is not real.
+
+::: warning Two Profit & Loss endpoints
+`/api/v1/profit-loss-statement` is the statement: it takes `from_date` / `to_date` and can be month-wise. `/api/v1/profit-loss` is the full-period P&L from the funds-flow report, and it ignores dates. For a P&L for a period, use the statement.
+:::
+
+::: tip Building an agent or a dashboard
+A tool that only calls the `GET` of an on-demand report keeps showing the same figures. Put the refresh, the wait and the read behind one call, so every answer is pulled fresh.
 :::
 
 ## Masters
