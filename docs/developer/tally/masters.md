@@ -215,13 +215,18 @@ important part, and it is not what the name suggests:
 | What you might assume | What is actually true |
 |---|---|
 | `No` means the type is unusable | A voucher **imports successfully** into a type reading `No` |
-| `No` means somebody de-activated it | Usually it means the company has that Tally **feature** switched off |
+| `No` means somebody de-activated it | It is usually the **factory default** — TallyPrime ships its secondary voucher types deactivated |
+
+It is the *Activate this Voucher Type* field on Tally's voucher-type screen,
+and TallyPrime ships Memorandum, Delivery Note, Receipt Note, Reversing Journal
+and the Job Work orders with it set to `No`. The customer turns on the ones they
+want to use. So `No` on those is the ordinary, untouched state and not a sign
+that anything is wrong.
 
 Measured on a TallyPrime test company: of 26 voucher types, 5 reported `No` —
-Memorandum, Receipt Note, Reversing Journal and two Job Work orders. Nobody had
-touched any of them; those are the types whose F11 feature was off. A voucher
-pushed into Memorandum was accepted (`CREATED=1`, `ERRORS=0`), and so was one
-pushed into a custom type created with the flag explicitly set to `No`.
+exactly that set, none of them edited by anyone. A voucher pushed into
+Memorandum was accepted (`CREATED=1`, `ERRORS=0`), and so was one pushed into a
+custom type created with the flag explicitly set to `No`.
 
 So treat `is_active` as information about Tally's own voucher-entry menus, not
 as a precondition:
@@ -236,9 +241,10 @@ actually matters is `numbering_method` (below), plus the type existing at all.
 
 ::: warning If a voucher type you use reports "No"
 That is Tally's answer, not a Bizmitra bug, and it does not need fixing before
-you can post. It is worth surfacing to the customer only as a note — their
-voucher type is not reachable from Tally's own menus, which they may not have
-intended — and the fix is theirs, in F11 features or on the voucher type itself.
+you can post. It is worth surfacing to the customer only as a note — the type is
+not reachable from Tally's own voucher-entry screens, so they cannot see or key
+those vouchers themselves, which they may not have intended. The fix is theirs:
+set *Activate this Voucher Type* to Yes on the voucher type.
 :::
 
 ### Verifying customer setup
