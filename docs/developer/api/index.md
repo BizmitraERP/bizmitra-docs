@@ -37,7 +37,7 @@ Three things appear in almost every request:
 | **Write** | `invoices`, `orders`, `credit-notes`, `debit-notes`, `purchases`, `receipts`, `payments`, `contras`, `journals` |
 | **Read** | `pulled-vouchers`, and its detail and acknowledgement endpoints |
 | **Transactions** | Status of asynchronous work |
-| **Reports** | `stock-summary`, `stock/monthly`, `stock-tree`, `stock/vouchers`, `funds-flow`, `profit-loss`, `tds-summary`, `tds/bills` |
+| **Reports** | Kept current: `stock-summary`, `stock/monthly`, `stock-tree`, `stock/vouchers`, `funds-flow`, `cash-flow`, `cash-bank-book`, `bank-recon`, `gst`, `tds-summary`, `bills-receivable`, `bills-payable`. Pulled on request (refresh, then read): `balance-sheet`, `trial-balance`, `profit-loss-statement`, `profit-loss`, `ledger`, `tds/bills` |
 | **Masters** | Create and track master jobs |
 | **Provisioning** | `applications`, `customers`, `companies` |
 | **Connectors** | Pairing codes, connector fleet, company health |
