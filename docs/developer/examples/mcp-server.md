@@ -350,7 +350,6 @@ Practical consequences for an MCP server:
 - **Prefer narrow tools over "fetch everything".** A date-bounded voucher list costs the customer's Tally far less than a full-book scan.
 - **Cache what does not move.** Ledger and stock-item lists change rarely; re-reading them on every turn is pure waste.
 - **Expect latency.** Reports that the Bizmitra Connector App pulls on a schedule are read from Bizmitra and are fast. A refresh-then-read report is asynchronous by nature.
-- **Refresh on-demand reports before reading them.** The Balance Sheet, Trial Balance, both Profit & Loss reports, the Ledger and TDS bills change only when you call their `POST …/refresh`. A tool that only reads them answers with the last pull, however old, and the agent cannot tell. Give the agent one tool that refreshes, waits for the job, then reads. See [Pulled on request](/developer/api/reference#pulled-on-request).
 
 A customer whose Tally stutters whenever someone uses your AI feature will switch the feature off.
 
