@@ -197,32 +197,48 @@ with `gstin` and `gst_registration_type` and you can work out the party's tax
 position from the pulled ledger alone, without asking the customer.
 
 ::: tip If these five are missing
-They are read with field names that not every TallyPrime build answers. Where a
-build refuses them, the Connector re-reads the ledger without them rather than
-failing the whole ledger pull — so the five are absent and everything else
-(including `is_billwise` and `gstin`) is there as usual. Treat them as optional
-in your code.
+They are confirmed working on current TallyPrime, but they are read with field
+names an older build may not answer. Where one refuses them, the Connector
+re-reads the ledger without them rather than failing the whole ledger pull — so
+the five are absent and everything else (including `is_billwise` and `gstin`) is
+there as usual. Read them defensively and you are covered either way.
 :::
 
 ### Whether a voucher type is active
 
-`is_active` is Tally's *activate this voucher type* setting, as `"Yes"` or `"No"`.
+`is_active` is Tally's *activate this voucher type* setting, as `"Yes"` or
+`"No"`, passed through exactly as Tally answers it.
 
-Read it as a safety check only, and read `"No"` with suspicion. Tally stores this
-flag **only where a voucher type has been deliberately de-activated**: on every
-ordinary type the tag is simply absent, and a de-activated type does not appear
-in voucher entry and cannot be posted to at all. So a type you can successfully
-post to is active, whatever this field says.
+**It does not tell you whether you can post to that voucher type.** This is the
+important part, and it is not what the name suggests:
 
-::: warning Connector v0.0.51 and earlier reported this wrongly
-Those builds projected the absent tag as `"No"`, so active custom voucher types —
-ones that were posting correctly at the time — read `is_active: "No"`. If you
-branched on it, you were filtering out working voucher types. From v0.0.52 only
-an explicit de-activation reads `"No"`.
+| What you might assume | What is actually true |
+|---|---|
+| `No` means the type is unusable | A voucher **imports successfully** into a type reading `No` |
+| `No` means somebody de-activated it | Usually it means the company has that Tally **feature** switched off |
 
-The correction reaches a company on its next full re-read of masters, which the
-upgrade itself triggers (see [How fresh pulled masters
-are](#how-fresh-pulled-masters-are)).
+Measured on a TallyPrime test company: of 26 voucher types, 5 reported `No` —
+Memorandum, Receipt Note, Reversing Journal and two Job Work orders. Nobody had
+touched any of them; those are the types whose F11 feature was off. A voucher
+pushed into Memorandum was accepted (`CREATED=1`, `ERRORS=0`), and so was one
+pushed into a custom type created with the flag explicitly set to `No`.
+
+So treat `is_active` as information about Tally's own voucher-entry menus, not
+as a precondition:
+
+```js
+// Wrong — this discards voucher types that work.
+const usable = types.filter(t => t.payload.fields.is_active === 'Yes')
+```
+
+If you want to know whether a voucher type will accept your push, the field that
+actually matters is `numbering_method` (below), plus the type existing at all.
+
+::: warning If a voucher type you use reports "No"
+That is Tally's answer, not a Bizmitra bug, and it does not need fixing before
+you can post. It is worth surfacing to the customer only as a note — their
+voucher type is not reachable from Tally's own menus, which they may not have
+intended — and the fix is theirs, in F11 features or on the voucher type itself.
 :::
 
 ### Verifying customer setup
