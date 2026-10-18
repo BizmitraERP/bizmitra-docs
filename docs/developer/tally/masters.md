@@ -383,8 +383,9 @@ already-linked company's untouched masters on the next full re-read, not before.
 You do not have to ask for one. The Connector fingerprints the set of fields it
 pulls, and an upgrade that changes that set makes every linked company owe
 exactly one full re-read, which it performs on its next cycle. That is how a new
-field — or a correction to how an existing one is read, like `is_active` above —
-reaches a company that has been linked for months.
+field — `state` and `address` on ledgers, say — reaches a company that has been
+linked for months, and the same mechanism covers a change to how an existing
+field is read.
 
 ::: warning Masters stopped refreshing on v0.0.51 and earlier
 On those builds the whole masters pull counted as heavy work, which Business
