@@ -349,7 +349,7 @@ Practical consequences for an MCP server:
 - **Serialize your own calls.** Do not fan out five report tools concurrently because the model asked for five things.
 - **Prefer narrow tools over "fetch everything".** A date-bounded voucher list costs the customer's Tally far less than a full-book scan.
 - **Cache what does not move.** Ledger and stock-item lists change rarely; re-reading them on every turn is pure waste.
-- **Expect latency.** Reports that the Bizmitra Connector App pulls on a schedule are read from Bizmitra and are fast. A refresh-then-read report is asynchronous by nature.
+- **Reports are already there.** The Bizmitra Connector App pulls every enabled report on its own schedule, so a report tool is a fast read from Bizmitra and never waits on Tally. Show `freshness.data_as_of` so the user knows how current the figures are.
 
 A customer whose Tally stutters whenever someone uses your AI feature will switch the feature off.
 
