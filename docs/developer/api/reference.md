@@ -52,21 +52,47 @@ Walkthrough: [Pull vouchers from Tally](/developer/examples/pull-vouchers).
 
 ## Reports
 
-| Method | Endpoint | Returns |
-|---|---|---|
-| `GET` | `/api/v1/stock-summary?company_id={id}` | Stock summary, all items |
-| `GET` | `/api/v1/stock/monthly?company_id={id}&item_name={name}` | Monthly movement for one item |
-| `GET` | `/api/v1/stock-tree` | Stock group tree |
-| `GET` | `/api/v1/stock/vouchers?company_id={id}&item_name={name}` | Vouchers affecting one item |
-| `GET` | `/api/v1/funds-flow` | Funds flow, 12 months |
-| `POST` | `/api/v1/profit-loss/refresh` | Refresh Profit & Loss |
-| `GET` | `/api/v1/profit-loss` | Read Profit & Loss |
-| `GET` | `/api/v1/tds-summary` | TDS summary per party |
-| `POST` | `/api/v1/tds/bills/refresh` | Refresh TDS bills for one party |
-| `GET` | `/api/v1/tds/bills?party={name}` | TDS bills for one party |
+Every report is a `GET`. There is nothing to request or refresh: the Connector reads each report from Tally on its own schedule and stores it, for every company whose application has that report enabled. Your read returns the latest stored copy.
 
-::: tip Refresh-then-read
-Profit & Loss and TDS bills follow a two-step pattern: `POST …/refresh` asks the Connector to recompute from Tally, then `GET` reads the result. The refresh is asynchronous, so allow it to complete before reading, or you will read the previous figures.
+Every report needs the company: send `X-Bizmitra-Company`, or `company_reference` (your `cmp_…` reference) as a query parameter.
+
+| Method | Endpoint | Returns | Enabled by |
+|---|---|---|---|
+| `GET` | `/api/v1/balance-sheet` | Balance Sheet, every head opened down to its ledgers | `report.financial_statements` |
+| `GET` | `/api/v1/trial-balance` | Trial Balance (closing Dr / Cr), every group opened down to its ledgers | `report.financial_statements` |
+| `GET` | `/api/v1/profit-loss-statement` | Profit & Loss, every income and expense group opened down to its ledgers | `report.financial_statements` |
+| `GET` | `/api/v1/ledger?ledger_name={name}` | One ledger's vouchers, as Tally's Ledger report shows them | `report.ledger` |
+| `GET` | `/api/v1/stock-summary` | Stock summary, all items | `report.stock` |
+| `GET` | `/api/v1/stock/monthly?item_name={name}` | Monthly movement for one item | `report.stock` |
+| `GET` | `/api/v1/stock/vouchers?item_name={name}` | Vouchers affecting one item | `report.stock` |
+| `GET` | `/api/v1/stock-tree` | Stock group tree | `report.stock` |
+| `GET` | `/api/v1/funds-flow` | Funds flow, 12 months | `report.financials` |
+| `GET` | `/api/v1/cash-flow` | Cash flow, 12 months | `report.cash_flow` |
+| `GET` | `/api/v1/cash-bank-book` | Closing balance of every cash and bank ledger, with its group | `report.cash_bank_book` |
+| `GET` | `/api/v1/bank-recon` | Uncleared bank entries. `bank_ledger` narrows to one bank | `report.bank_recon` |
+| `GET` | `/api/v1/gst` | GSTR-1 and GSTR-3B return view. Filters: `statement_type`, `period_key`, `section_key` | `report.gst` |
+| `GET` | `/api/v1/gst/stats` | Which GST periods are held, and when they last refreshed | `report.gst` |
+| `GET` | `/api/v1/tds-summary` | TDS outstanding per party | `report.tds` |
+| `GET` | `/api/v1/tds/bills?party={name}` | One party's TDS bills | `report.tds` |
+| `GET` | `/api/v1/bills-receivable` | Pending bills the company is owed. `party` narrows to one party | `report.bills_receivable` |
+| `GET` | `/api/v1/bills-payable` | Pending bills the company owes. `party` narrows to one party | `report.bills_payable` |
+
+A report your application does not have enabled answers `403` with `capability_not_allowed`. If the application has it but the company's customer was not given it, the answer is `403` with `sync_capability_not_assigned`. Once it is enabled, the Connector picks it up within a few minutes and its first pull follows.
+
+### How current a report is
+
+Each read carries a `freshness` block. `data_status` says what you are reading: `current` or `available` (stored and usable), `partial`, `stale`, `no_data` (pulled, and Tally held nothing), `never_synced`, `failed` or `disabled`. `data_as_of` is when the stored copy was taken. The Connector refreshes most reports about every 15 minutes while Tally is open with the company loaded. On a computer set to business hours, the heavier reports refresh after hours, and GST about hourly during the day.
+
+### Balance Sheet, Trial Balance and Profit & Loss
+
+These three come in Tally's detailed view. Every row has `name`, `row_type` (`group` or `ledger`) and `parent_group` (the group it sits under; `null` for a main head), so the tree can be rebuilt. For example, **Sundry Debtors** is followed by each debtor and their balance, and sub-groups are opened the same way. A group's figure is the sum of the rows beneath it.
+
+- They are read for Tally's current period, as Tally shows them, and stored under `range_key` `current`. A read without `range_key` returns the latest.
+- The Balance Sheet and Profit & Loss give one signed `amount` per row (Dr negative, Cr positive; take `abs()` to match Tally's screen). The Trial Balance gives `closing_debit` and `closing_credit`.
+- Tally does not export its "Difference in opening balances" line. When a company has one, the Balance Sheet and Trial Balance totals differ by exactly that amount.
+
+::: tip One Profit & Loss
+`GET /api/v1/profit-loss-statement` is the Profit & Loss. The older `/api/v1/profit-loss` and every `…/refresh` endpoint have been removed.
 :::
 
 ## Masters

@@ -37,7 +37,7 @@ If ping fails, check the `Authorization` header format. If health fails, the pro
 | Vouchers | Invoices, orders, credit and debit notes, purchases, receipts, payments, contras, journals |
 | Transactions | Status lookup, list |
 | Pulled vouchers | List, detail, acknowledge |
-| Reports | Stock summary, monthly stock, stock tree, stock vouchers, funds flow, P&L, TDS |
+| Reports | One `GET` per report, pulled from Tally automatically: Balance Sheet, Trial Balance, Profit & Loss (detailed, down to ledgers), Ledger, stock (summary, monthly, tree, vouchers), funds flow, cash flow, cash/bank book, bank reconciliation, GST, TDS, bills receivable and payable |
 | Masters | Push master, list jobs, job status |
 | Provisioning | Applications, customers, companies |
 | Connectors | Pairing codes, fleet management, health, disconnect |
