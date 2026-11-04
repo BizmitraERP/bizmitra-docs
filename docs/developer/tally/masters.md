@@ -115,8 +115,8 @@ Each row carries the master's fields under `payload`:
 
 | Type | Fields |
 |---|---|
-| `group` | `parent`, `is_subledger`, `is_deemed_positive`, `is_revenue`, `is_billwise` |
-| `ledger` | `parent`, `currency`, `opening_balance`, `gstin`, `gst_registration_type`, `mobile`, `email`, `is_billwise` |
+| `group` | `parent`, `is_subledger`, `is_deemed_positive`, `is_revenue` |
+| `ledger` | `parent`, `currency`, `opening_balance`, `gstin`, `gst_registration_type`, `mobile`, `email`, `is_billwise`, `mailing_name`, `address`, `state`, `country`, `pincode` |
 | `currency` | `mailing_name`, `original_name`, `expanded_symbol`, `iso_code`, `decimal_places` |
 | `unit` | `is_simple_unit`, `decimal_places`, `base_units`, `additional_units` |
 | `godown` | `parent` |
@@ -159,6 +159,93 @@ if ((party?.payload?.fields?.is_billwise ?? '').toLowerCase() !== 'yes') {
 Tally omits the underlying tag entirely on some builds and returns `No` on others; Bizmitra normalizes both to a plain `"No"`, so you never have to read a missing value as "off".
 
 Bill references themselves are covered in [Pulling vouchers](/developer/examples/pull-vouchers#which-bills-a-voucher-opened-or-settled) and [Pushing a receipt](/developer/examples/push-receipt).
+
+### The party's postal identity
+
+A ledger also carries the address block Tally holds for that party:
+
+| Field | Meaning |
+|---|---|
+| `mailing_name` | The name to address the party by, which is often not the ledger name |
+| `address` | The address, as an **array of lines**, blanks removed |
+| `state` | Tally's state for the ledger — what decides GST place of supply |
+| `country` | Country name |
+| `pincode` | Postal code |
+
+```json
+{
+  "name": "Example Party Ltd",
+  "fields": {
+    "mailing_name": "Example Party Limited",
+    "address": ["201, Second Floor", "Example Complex", "Ahmedabad"],
+    "state": "Gujarat",
+    "country": "India",
+    "pincode": "380015",
+    "gstin": "24AAAAA0000A1Z5",
+    "gst_registration_type": "Regular"
+  }
+}
+```
+
+`address` is a list, not a string: Tally stores an address as separate lines and
+there is no single-line form that is correct for every party. Join it yourself
+with whatever separator your document needs. A ledger with no address gives an
+empty list, never `null`.
+
+`state` is the field to read for an intra- vs inter-state GST decision. Pair it
+with `gstin` and `gst_registration_type` and you can work out the party's tax
+position from the pulled ledger alone, without asking the customer.
+
+::: tip If these five are missing
+They are confirmed working on current TallyPrime, but they are read with field
+names an older build may not answer. Where one refuses them, the Connector
+re-reads the ledger without them rather than failing the whole ledger pull — so
+the five are absent and everything else (including `is_billwise` and `gstin`) is
+there as usual. Read them defensively and you are covered either way.
+:::
+
+### Whether a voucher type is active
+
+`is_active` is Tally's *activate this voucher type* setting, as `"Yes"` or
+`"No"`, passed through exactly as Tally answers it.
+
+**It does not tell you whether you can post to that voucher type.** This is the
+important part, and it is not what the name suggests:
+
+| What you might assume | What is actually true |
+|---|---|
+| `No` means the type is unusable | A voucher **imports successfully** into a type reading `No` |
+| `No` means somebody de-activated it | It is usually the **factory default** — TallyPrime ships its secondary voucher types deactivated |
+
+It is the *Activate this Voucher Type* field on Tally's voucher-type screen,
+and TallyPrime ships Memorandum, Delivery Note, Receipt Note, Reversing Journal
+and the Job Work orders with it set to `No`. The customer turns on the ones they
+want to use. So `No` on those is the ordinary, untouched state and not a sign
+that anything is wrong.
+
+Measured on a TallyPrime test company: of 26 voucher types, 5 reported `No` —
+exactly that set, none of them edited by anyone. A voucher pushed into
+Memorandum was accepted (`CREATED=1`, `ERRORS=0`), and so was one pushed into a
+custom type created with the flag explicitly set to `No`.
+
+So treat `is_active` as information about Tally's own voucher-entry menus, not
+as a precondition:
+
+```js
+// Wrong — this discards voucher types that work.
+const usable = types.filter(t => t.payload.fields.is_active === 'Yes')
+```
+
+If you want to know whether a voucher type will accept your push, the field that
+actually matters is `numbering_method` (below), plus the type existing at all.
+
+::: warning If a voucher type you use reports "No"
+That is Tally's answer, not a Bizmitra bug, and it does not need fixing before
+you can post. It is worth surfacing to the customer only as a note — the type is
+not reachable from Tally's own voucher-entry screens, so they cannot see or key
+those vouchers themselves, which they may not have intended. The fix is theirs:
+set *Activate this Voucher Type* to Yes on the voucher type.
+:::
 
 ### Verifying customer setup
 
@@ -274,6 +361,42 @@ Older connectors return no `aliases` key at all. Read it defensively (`fields.al
 
 ::: tip Aliases change without the name changing
 Adding an alias is an alter, so `tally.alter_id` moves and the master re-syncs — but `name` is unchanged, and a check that compares only names will report "nothing changed". If you cache a resolution table, rebuild it on `alter_id`, not on the name.
+:::
+
+## How fresh pulled masters are
+
+Pulled masters are a cache the Connector refreshes on a schedule. It is not
+live: a ledger created in Tally a minute ago may not be in the feed yet.
+
+Two passes keep it current, and they answer different questions:
+
+| Pass | What it reads | When |
+|---|---|---|
+| **Changed masters** | Only masters whose Tally `alter_id` moved since the last pass | Every sync cycle off-hours; at most every 15 minutes during the customer's business hours |
+| **Full re-read** | Every master of every type, regardless of `alter_id` | Every 30 minutes off-hours; at most hourly during business hours |
+
+The full re-read is the one that matters for anything other than day-to-day
+edits. A changed-masters pass can only ever bring you masters somebody edited —
+so when Bizmitra adds a **new field** to the pull, that field reaches an
+already-linked company's untouched masters on the next full re-read, not before.
+
+You do not have to ask for one. The Connector fingerprints the set of fields it
+pulls, and an upgrade that changes that set makes every linked company owe
+exactly one full re-read, which it performs on its next cycle. That is how a new
+field — `state` and `address` on ledgers, say — reaches a company that has been
+linked for months, and the same mechanism covers a change to how an existing
+field is read.
+
+::: warning Masters stopped refreshing on v0.0.51 and earlier
+On those builds the whole masters pull counted as heavy work, which Business
+Hours mode (the default) defers to off-hours. On a customer PC that is switched
+off in the evening, off-hours never arrive — so masters stopped refreshing
+entirely and the Connector reported every attempt as *deferred*, indefinitely,
+while vouchers kept syncing normally.
+
+If a customer's pulled masters are stale and the dates stop moving, that is the
+cause, and v0.0.52 is the fix: both passes now run during business hours on the
+slower cadences in the table above.
 :::
 
 ## Do not create masters casually

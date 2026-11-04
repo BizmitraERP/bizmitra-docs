@@ -8,6 +8,34 @@ Accept: application/json
 
 Health answers one question: **can work against this company run right now?**
 
+## Recommended, never required
+
+Checking health is a **recommendation, not a precondition**. No push is rejected
+for skipping it, and no capability depends on it. You can submit a voucher
+without ever calling this endpoint and it will be queued exactly the same.
+
+What you lose by skipping it is diagnosis, not delivery. And you do not have to
+choose between the two: an accepted push already tells you when it cannot run
+yet. The `202` carries a `diagnostic` block naming the problem — Connector
+offline, Tally closed, a different company open — so the common case needs no
+extra call at all.
+
+```json
+{
+  "success": true,
+  "transaction_id": "9f1c…",
+  "diagnostic": { "code": "TALLY_NOT_RUNNING", "stage": "connector" }
+}
+```
+
+Add `?diagnostics=full` to get the `health` and `checks` blocks on a push that is
+perfectly fine, if you would rather always have them.
+
+So: call health when you need to decide something *before* committing — showing
+a connection status in your UI, gating a bulk run, telling a user to go open
+Tally — and rely on the push's own diagnostic the rest of the time. One health
+call per voucher is not a pattern we ask for.
+
 ## Use it as a gate
 
 Call health before any meaningful operation, particularly writes. It costs one cheap request and removes an entire category of confusing failure.

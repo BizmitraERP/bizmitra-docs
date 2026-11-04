@@ -62,6 +62,43 @@ An `Agst Ref` name must match a bill genuinely outstanding for that party. It is
 
 Pulled vouchers carry the same field, on every kind: an invoice that opened a bill reports `New Ref`, a receipt that cleared one reports `Agst Ref`. So a pulled voucher can be pushed back unchanged.
 
+## Updating and deleting vouchers
+
+Every push is a **create**. There is no update endpoint and no delete endpoint,
+and sending a voucher again does not amend the first one.
+
+What happens if you try:
+
+| What you send | What happens |
+|---|---|
+| The same voucher with the **same idempotency key** | Nothing is sent to Tally. You get the original job back with `idempotent_replay: true` — which is the de-duplication working, not an update |
+| A corrected voucher with a **new** idempotency key | A **second voucher** in the customer's books. Nothing links it to the first |
+
+So an edit in your system cannot currently be pushed as an edit. Model the
+correction the way accounting does, which is also what the customer's auditor
+expects:
+
+- **Wrong amount or wrong lines on a sales invoice** — raise a credit note
+  (`POST /api/v1/credit-notes`) and, if needed, a corrected invoice.
+- **Wrong amount on a purchase** — raise a debit note.
+- **Wrong ledger on a receipt or payment** — post the reversing entry, then the
+  correct one.
+- **A voucher that should never have existed** — the customer cancels or deletes
+  it in Tally. Your side notices through the pulled-voucher feed.
+
+::: info Why the GUID is still worth storing
+[Jobs and transactions](/developer/platform-concepts/jobs-and-transactions#identifiers-and-which-one-to-keep)
+tells you to keep `tally_voucher_guid`, and that still holds — it is how you
+recognise the voucher in the pulled feed, follow its `tally_alter_id` when
+somebody edits it in Tally, and how a future update endpoint will target it.
+Today it is an identifier, not yet an instruction.
+:::
+
+Update and delete are both on the roadmap rather than shipped; the mechanism
+Tally needs is understood and tested at the Tally boundary, and what is missing
+is the API surface and the safety rules around it. We will not give a date here
+until it is in a release.
+
 ## Reading vouchers
 
 Vouchers created in Tally arrive through the pulled-voucher queue:

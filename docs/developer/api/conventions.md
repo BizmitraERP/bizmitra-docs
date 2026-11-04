@@ -101,4 +101,62 @@ Be a reasonable client:
 
 ## Idempotency
 
-Assume any request may be delivered more than once. Design writes so that a duplicate submission does not produce a duplicate voucher. Covered in [Jobs and transactions](/developer/platform-concepts/jobs-and-transactions).
+Assume any request may be delivered more than once. Design writes so that a duplicate submission does not produce a duplicate voucher.
+
+Send your own key on every push and Bizmitra will de-duplicate for you: the same key submitted twice returns the **original** job rather than queueing a second one.
+
+```http
+POST /api/v1/invoices
+Idempotency-Key: INV-2026-0042
+```
+
+The key can travel in any of three places, whichever suits your client:
+
+| Where | Field |
+|---|---|
+| Header | `Idempotency-Key` |
+| Body, top level | `idempotency_key` |
+| Body, top level | `transaction_id` — if that is what your own records call it |
+
+The header wins if you send more than one. Keys in the body must be at the **top
+level**, alongside `voucher` / `invoice` / `order` — not inside it. That object
+is forwarded to Tally verbatim, so a field that is sometimes voucher data and
+sometimes an idempotency handle would be a trap.
+
+Rules for the key itself: up to 255 visible ASCII characters, no spaces. Use
+something stable from your own system — the order id, the invoice number — not a
+fresh UUID per attempt, which defeats the point.
+
+Two things in the response tell you it was honoured:
+
+```json
+{
+  "success": true,
+  "transaction_id": "9f1c…",
+  "idempotency_key": "INV-2026-0042",
+  "idempotent_replay": true
+}
+```
+
+- `idempotency_key` echoes back what was read. **Absent means no key was found in your request** — check where you put it.
+- `idempotent_replay: true` means this key had been seen before and `transaction_id` is the original job. No second voucher was queued.
+
+A key is scoped to your developer account, the company and the voucher family,
+so your keys cannot collide with another developer's, and reusing one key for
+both a receipt and an invoice stays two operations rather than silently becoming
+one.
+
+::: tip The safe retry
+Without a key, a push that times out leaves you unable to tell "not sent" from
+"queued", and the only safe move is to poll `GET /api/v1/transactions/{id}`
+before retrying. With a key, re-sending the identical request is safe — which is
+the whole reason to send one.
+:::
+
+::: warning Not available before 18 October 2026
+Earlier releases read the key from the `Idempotency-Key` header only, and
+nothing in the response said whether it had been read. A key sent in the body was
+ignored, and an identical push created a second job.
+:::
+
+Client-side practice is covered in [Jobs and transactions](/developer/platform-concepts/jobs-and-transactions).
