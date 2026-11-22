@@ -11,9 +11,17 @@ Bizmitra's audit trail helps authorized users understand **who changed a record,
 
 1. Open the relevant **voucher register** (for example, the Sales Invoice register).
 2. Find the voucher you want to inspect.
-3. Click the **voucher type/link** for that entry to open its **Audit History** report.
-4. In the audit history, review the chronological list of events.
+3. Click the **voucher type/link** for that entry.
+
+   ![Sales Invoice register listing vouchers with their status, source and last change](/images/erp/audit-history/sales-invoice-register.png)
+
+4. The **Universal Activity Log** opens, filtered to that voucher ("Showing audit history for Invoice transaction"). Review the chronological list of events, grouped by date, with totals for created, updated, deleted, cancelled and rolled-back changes.
+
+   ![Universal Activity Log filtered to one sales invoice, showing its update events by date](/images/erp/audit-history/universal-activity-log.png)
+
 5. Click or expand an event to see the **detailed changes**, including the values before and after the change where available.
+
+   ![Expanded sync event comparing the values Tally held before and after the sync, with bill allocation and item changes](/images/erp/audit-history/expanded-sync-event.png)
 
 Depending on the event, the details may include the user, timestamp, action, narration, item or bill-allocation changes, and Tally synchronization activity.
 
