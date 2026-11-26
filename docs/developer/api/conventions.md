@@ -32,6 +32,10 @@ List endpoints paginate. Respect it.
 
 Never assume one response contains everything. A company with three years of history has tens of thousands of vouchers, and the first page is not a representative sample.
 
+::: info Changing in the next release
+When the next release ships, `total`, `count` and statistics count **only the rows your application may read**. Pulled vouchers whose kind is missing, `other` or not recognised are withheld, and a request's scope covers at most 2,000 companies. Totals can therefore fall after the release without any data having been removed — do not treat a drop as a deletion signal.
+:::
+
 ```js
 async function all(params) {
   const out = []

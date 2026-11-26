@@ -163,7 +163,9 @@ No. When it is paired it is authorized for your companies only, and that authori
 
 ### Does Bizmitra store my Tally data?
 
-Your provider's integration determines what is synced and retained. Ask them what their product stores and for how long — they own that relationship and that answer.
+Partly. The Bizmitra ERP application does not keep a copy of the Tally data your provider pulls or pushes through the developer API. Bizmitra's connector middleware — the sync service between your provider and the Connector — does store what passes through it: the jobs your provider pushes, vouchers pulled from Tally (as structured data and as the raw Tally XML), masters, and report snapshots.
+
+No automatic deletion schedule has been published for that stored data yet. Your provider's product keeps its own copy under its own terms, so ask them what they store and for how long; for what Bizmitra holds, ask your provider or Bizmitra support.
 
 ### What does the Connector send back?
 
