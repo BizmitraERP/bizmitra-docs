@@ -33,6 +33,14 @@ An integration that only handles the first kind will appear to work and will sil
 | `429` | Too many requests | Back off |
 | `5xx` | Server error | Retry with backoff |
 
+::: info Changing in the next release
+When the next release ships:
+
+- A `company_id` that belongs to another application or another environment returns `404`.
+- Scoped reads can return `503` with `error: "BROKER_SCOPE_UNSUPPORTED"` when the scope cannot be applied safely. Retry later with backoff; never read it as "no data".
+- Capability checks widen: `/api/v1/masters*` needs the master capability, `/api/v1/transactions*` the push capability, and `/api/v1/tally/{resource}` `pull.master` (and only `GET ledgers` / `GET units`). Missing capabilities return the `403` errors below.
+:::
+
 ## `401` vs `403`
 
 Worth separating, because the fixes are unrelated.

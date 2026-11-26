@@ -15,6 +15,10 @@ This page lists the endpoint surface. Detailed per-endpoint request and response
 | `GET` | `/api/v1/ping` | Verify authentication |
 | `GET` | `/api/v1/tally/{resource}` | Tally bridge passthrough |
 
+::: info Changing in the next release
+When the next release ships, `/api/v1/tally/{resource}` is limited to `GET ledgers` and `GET units`, and requires the `pull.master` capability.
+:::
+
 ## Writing vouchers
 
 All are asynchronous and return a `transaction_id`. See [Jobs and transactions](/developer/platform-concepts/jobs-and-transactions).
@@ -50,6 +54,10 @@ List filters: `voucher_kind`, `voucher_type`, `status`, `start_date`, `end_date`
 
 Walkthrough: [Pull vouchers from Tally](/developer/examples/pull-vouchers).
 
+::: info Changing in the next release
+When the next release ships: vouchers whose kind is missing, `other` or not recognised are withheld; `total` and `count` cover only rows your application may read; `POST …/ack` returns out-of-scope ids in a `refused` list and never acknowledges them; and a company belonging to another application or environment returns `404`. See [Pull vouchers](/developer/examples/pull-vouchers#_1-list-vouchers).
+:::
+
 ## Reports
 
 | Method | Endpoint | Returns |
@@ -81,6 +89,10 @@ Profit & Loss and TDS bills follow a two-step pattern: `POST …/refresh` asks t
 `{type}` is one of `group`, `ledger`, `currency`, `unit`, `godown`, `stock_group`, `stock_category`, `stock_item`, `voucher_type`. Hyphens are accepted (`stock-item`).
 
 The first three endpoints report **your pushes**. `pulled-masters` reports **what exists in the customer's company** — it requires the `pull.master` capability and the masters pull enabled for that company. List filters: `limit` (max 200), `offset`.
+
+::: info Changing in the next release
+When the next release ships, `/api/v1/masters*` requires your application's master capability and `/api/v1/transactions*` requires its push capability. A company belonging to another application or environment returns `404`.
+:::
 
 See [Masters](/developer/tally/masters).
 

@@ -70,6 +70,15 @@ Two things to notice:
 
 **Respect `total`, `limit`, and `offset`.** One page is not all the vouchers. A company with three years of history has tens of thousands.
 
+::: info Changing in the next release
+These take effect when the next release ships; until then the current behaviour applies.
+
+- Vouchers whose `voucher_kind` is missing, `other` or not recognised are **withheld** from the list and from fetch-by-id.
+- `total`, `count` and statistics count **only rows your application may read**, so they can drop after the release without any data being removed.
+- A request's scope covers **at most 2,000 companies**.
+- A request may be refused with `503` and `error: "BROKER_SCOPE_UNSUPPORTED"` when the scope cannot be applied safely. Treat it as retryable later, not as an empty result.
+:::
+
 ## 2. Fetch one voucher
 
 ```http
@@ -246,6 +255,10 @@ Acknowledgement moves processed vouchers out of the default pending queue. It is
 If you acknowledge first and your own transaction then fails, the voucher has left the pending queue and your database does not have it. You will not see it again in the default query.
 
 Order: process → commit → acknowledge.
+:::
+
+::: info Changing in the next release
+When the next release ships, ids outside your application's scope are **never acknowledged**. They come back in a `refused` list in the response instead. Check `refused` rather than assuming every id you sent left the pending queue.
 :::
 
 ## Putting it together
